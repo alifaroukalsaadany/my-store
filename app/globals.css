@@ -1,0 +1,2 @@
+@import "tailwindcss";
+:root{color-scheme:light}html{scroll-behavior:smooth}body{margin:0;font-family:Arial,sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}
