@@ -151,9 +151,7 @@ export default function Home() {
           <a href="#" className="text-2xl font-black tracking-[.16em]">LE<span className="text-[#B8860B]">V</span>EL</a>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <button onClick={() => setLang(isAr ? "en" : "ar")} className="rounded-full border border-[#d8c7a9] px-4 py-2 text-sm font-semibold">{isAr ? "العربية | EN" : "EN | العربية"}</button>
-            {!preview && <button onClick={() => setPreview(true)} className="rounded-full bg-[#1E1E1E] px-4 py-2 text-sm text-white">{t.preview}</button>}
-            {preview && <button onClick={() => setPreview(false)} className="rounded-full border border-[#B8860B] px-4 py-2 text-sm">{t.preview}: {isAr ? "مفعّل" : "On"}</button>}
-            {!preview && <button onClick={() => setOwnerOpen(true)} className="rounded-full bg-[#F2ECE4] px-4 py-2 text-sm">{t.owner} <span className="ms-1 rounded-full bg-[#B8860B] px-2 text-white">{orders.length}</span></button>}
+
           </div>
         </div>
       </header>
@@ -175,7 +173,6 @@ export default function Home() {
       <section id="collection" className="mx-auto max-w-7xl px-4 py-12 md:px-8 md:py-16">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div><p className="text-sm tracking-[.2em] text-[#9B741C]">THE COLLECTION</p><h2 className="mt-2 text-3xl font-semibold">{t.collection}</h2></div>
-          {!preview && <button onClick={() => setAddOpen(true)} className="rounded-full border border-[#B8860B] px-5 py-3 text-sm font-semibold hover:bg-[#f3ead8]">＋ {t.add}</button>}
         </div>
         <div className="mb-8 flex flex-wrap gap-2">
           {categoryOptions.map(([key,label]) => <button key={key} onClick={() => setFilter(key)} className={`rounded-full px-5 py-2.5 text-sm ${filter===key ? "bg-[#1E1E1E] text-white" : "border border-[#e1d6c7] bg-white"}`}>{label}</button>)}
@@ -184,7 +181,6 @@ export default function Home() {
           {visibleProducts.map(product => <article key={product.id} className="group overflow-hidden rounded-2xl border border-[#e9e0d5] bg-white shadow-[0_8px_30px_rgba(54,42,25,.04)]">
             <div className="relative bg-[#F2ECE4]">
               <img src={product.image} alt={isAr ? product.nameAr : product.nameEn} className="h-[330px] w-full object-cover transition duration-500 group-hover:scale-[1.02]" onError={e => { e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='700'%3E%3Crect width='100%25' height='100%25' fill='%23e9dfd2'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%239b8b78' font-size='28'%3ELEVEL%3C/text%3E%3C/svg%3E"; }} />
-              {!preview && <label className="absolute bottom-3 end-3 cursor-pointer rounded-full bg-white/95 px-4 py-2 text-xs shadow">{t.change}<input ref={el => {fileRefs.current[product.id]=el;}} type="file" accept="image/*" className="hidden" onChange={e => uploadFor(product.id,e.target.files?.[0])}/></label>}
             </div>
             <div className="p-5">
               <h3 className="text-lg font-semibold">{isAr ? product.nameAr : product.nameEn}</h3>
@@ -232,22 +228,6 @@ export default function Home() {
         </section>
       </div>}
 
-      {ownerOpen && !preview && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"><section className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-[#FAF8F5] p-6">
-        <div className="flex items-center justify-between"><h2 className="text-2xl font-semibold">{t.owner}</h2><button onClick={()=>setOwnerOpen(false)} className="text-2xl">×</button></div>
-        <p className="mt-3 text-sm text-[#7b7166]">{t.adminHint}</p>
-        <div className="mt-4 flex gap-2"><input type="password" value={ownerKey} onChange={e=>setOwnerKey(e.target.value)} placeholder={t.ownerKey} className="min-w-0 flex-1 rounded-xl border border-[#ded4c8] bg-white p-3"/><button onClick={loadOrders} className="rounded-xl bg-[#1E1E1E] px-5 text-white">{t.load}</button></div>
-        {ownerError && <p className="mt-3 text-sm text-red-700">{ownerError}</p>}
-        <div className="mt-5 space-y-3">{orders.length===0 ? <p className="py-6 text-center text-[#82776b]">{t.noOrders}</p> : orders.map(o=><article key={o.id} className="rounded-xl border border-[#e5dbce] bg-white p-4"><div className="flex justify-between gap-3"><b>{o.name}</b><span className="text-xs text-[#9B741C]" dir="ltr">{o.id}</span></div><p className="mt-2 text-sm leading-7">{o.product} · {o.color} · {o.size}<br/>{o.phone}<br/>{o.address}<br/>{t.unknown}</p><button onClick={()=>forwardWhatsApp(o)} className="mt-2 text-sm underline">{t.forward}</button></article>)}</div>
-      </section></div>}
-
-      {addOpen && !preview && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"><form onSubmit={addProduct} className="w-full max-w-lg space-y-4 rounded-3xl bg-[#FAF8F5] p-6">
-        <div className="flex items-center justify-between"><h2 className="text-2xl font-semibold">{t.add}</h2><button type="button" onClick={()=>setAddOpen(false)} className="text-2xl">×</button></div>
-        <input required value={newPiece.nameAr} onChange={e=>setNewPiece({...newPiece,nameAr:e.target.value})} placeholder={t.newNameAr} className="w-full rounded-xl border border-[#ded4c8] bg-white p-3"/>
-        <input required value={newPiece.nameEn} onChange={e=>setNewPiece({...newPiece,nameEn:e.target.value})} placeholder={t.newNameEn} className="w-full rounded-xl border border-[#ded4c8] bg-white p-3"/>
-        <select value={newPiece.category} onChange={e=>setNewPiece({...newPiece,category:e.target.value})} className="w-full rounded-xl border border-[#ded4c8] bg-white p-3"><option value="shirts">{t.shirtsOpt}</option><option value="knit">{t.knitOpt}</option><option value="outfits">{t.outfitsOpt}</option></select>
-        <label className="block rounded-xl border border-dashed border-[#B8860B] p-4 text-center">{t.change}<input name="newImage" type="file" accept="image/*" className="mt-2 block w-full text-sm"/></label>
-        <button className="w-full rounded-full bg-[#1E1E1E] py-3 text-white">{t.save}</button>
-      </form></div>}
     </main>
   );
 }
