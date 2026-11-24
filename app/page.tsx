@@ -196,7 +196,7 @@ export default function Home() {
             </div>
             <div className="p-5">
               <h3 className="text-lg font-semibold">{isAr ? product.nameAr : product.nameEn}</h3>
-              <p className="mt-2 text-sm text-[#8A8176]">{selected.price && selected.price > 0 ? `${selected.price.toLocaleString("ar-EG")} ج.م` : t.unknown}</p>
+              <p className="mt-2 text-sm text-[#8A8176]">{product.price && product.price > 0 ? `${product.price.toLocaleString("ar-EG")} ج.م` : t.unknown}</p>
               <button onClick={() => openOrder(product)} className="mt-5 w-full rounded-full bg-[#1E1E1E] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#B8860B]">{t.order}</button>
             </div>
           </article>)}
@@ -226,7 +226,7 @@ export default function Home() {
             <h3 className="mt-5 font-semibold">{t.summary}</h3><p className="mt-3 leading-8">{done.product}<br/>{t.customer}: {done.name}<br/>{t.phone}: {done.phone}<br/>{t.area}: {done.address}<br/>{t.color}: {done.color} · {t.size}: {done.size}<br/>{t.priceLine}</p>
             <button onClick={() => forwardWhatsApp(done)} className="mt-6 w-full rounded-full bg-[#1E1E1E] px-5 py-3 text-white">{t.forward}</button>
           </div> : <form onSubmit={submitOrder} className="mt-6 space-y-4">
-            <p className="rounded-xl bg-[#F2ECE4] p-3">{isAr ? selected.nameAr : selected.nameEn} · {product.price && product.price > 0 ? `${product.price.toLocaleString("ar-EG")} ج.م` : t.unknown}</p>
+            <p className="rounded-xl bg-[#F2ECE4] p-3">{isAr ? selected.nameAr : selected.nameEn} · {selected.price && selected.price > 0 ? `${selected.price.toLocaleString("ar-EG")} ج.م` : t.unknown}</p>
             <label className="block text-sm">{t.customer}<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
             <label className="block text-sm">{t.phone}<input required type="tel" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
             <label className="block text-sm">{t.area}<textarea required value={form.address} onChange={e=>setForm({...form,address:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
