@@ -102,7 +102,7 @@ export default function Home() {
 
   function openOrder(product: Product) {
     setSelected(product);
-    setForm({ name:"", phone:"", address:"", color:product.colors[0] || "", size:product.sizes[0] || "", notes:"" });
+    setForm({ name:"", phone:"", address:"", color:product.colors[0] || "غير محدد", size:product.sizes[0] || "غير محدد", notes:"" });
     setDone(null);
   }
 
@@ -236,8 +236,8 @@ export default function Home() {
             <label className="block text-sm">{t.phone}<input required type="tel" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
             <label className="block text-sm">{t.area}<textarea required value={form.address} onChange={e=>setForm({...form,address:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
             <div className="grid grid-cols-2 gap-3">
-              <label className="block text-sm">{t.color}<select value={form.color} onChange={e=>setForm({...form,color:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3">{selected.colors.map(c=><option key={c}>{c}</option>)}</select></label>
-              <label className="block text-sm">{t.size}<select value={form.size} onChange={e=>setForm({...form,size:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3">{selected.sizes.map(s=><option key={s}>{s}</option>)}</select></label>
+              <label className="block text-sm">{t.color}<select value={form.color} onChange={e=>setForm({...form,color:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3">{(selected.colors.length ? selected.colors : ["غير محدد"]).map(c=><option key={c}>{c}</option>)}</select></label>
+              <label className="block text-sm">{t.size}<select value={form.size} onChange={e=>setForm({...form,size:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3">{(selected.sizes.length ? selected.sizes : ["غير محدد"]).map(s=><option key={s}>{s}</option>)}</select></label>
             </div>
             <label className="block text-sm">{t.notes}<textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
             <p className="text-sm text-[#82776b]">{t.unknown}</p>
