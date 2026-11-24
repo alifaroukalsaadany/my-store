@@ -57,7 +57,11 @@ export async function GET(request: NextRequest) {
     `${supabaseUrl}/rest/v1/orders?select=*&order=created_at.desc&limit=200`,
     { headers: { apikey: serviceKey!, Authorization: `Bearer ${serviceKey}` }, cache: "no-store" }
   );
-  if (!response.ok) return NextResponse.json({ error: "Could not load orders." }, { status: 502 });
+  if (!response.ok) {
+    const detail = await response.text();
+    console.error("Order load failed:", response.status, detail);
+    return NextResponse.json({ error: "Could not load orders." }, { status: 502 });
+  }
   const rows = await response.json();
   return NextResponse.json({
     orders: rows.map((row: Record<string, string>) => ({
