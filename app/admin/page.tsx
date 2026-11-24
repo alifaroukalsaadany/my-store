@@ -27,6 +27,8 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingImages, setEditingImages] = useState<string[]>([]);
 
   async function api(path: string, init: RequestInit = {}) {
     const response = await fetch(path, {
@@ -54,7 +56,7 @@ export default function AdminPage() {
   async function saveProduct(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setSaving(true); setError("");
     try {
-      let imageUrls = form.image.trim() ? [form.image.trim()] : [];
+      let imageUrls = form.image.trim() ? [form.image.trim()] : (editingId ? editingImages : []);
       if (imageFiles.length) {
         const uploaded = await Promise.all(imageFiles.map(file => upload(file.name, file, {
           access: "public",
@@ -64,8 +66,9 @@ export default function AdminPage() {
         imageUrls = uploaded.map(blob => blob.url);
       }
       await api("/api/products", {
-        method: "POST",
+        method: editingId ? "PATCH" : "POST",
         body: JSON.stringify({
+          ...(editingId ? { id: editingId } : {}),
           name: form.name, description: form.description, price: form.price.trim() === "" ? 0 : Number(form.price),
           image_urls: imageUrls,
           sizes: form.sizes.split(",").map(x => x.trim()).filter(Boolean),
@@ -76,10 +79,30 @@ export default function AdminPage() {
       setForm(blank);
       setImageFiles([]);
       setImagePreviews([]);
+      setEditingId(null);
+      setEditingImages([]);
       const p = await api("/api/products?admin=1");
       setProducts(p.products || []);
     } catch (e) { setError(e instanceof Error ? e.message : "تعذرت إضافة المنتج."); }
     finally { setSaving(false); }
+  }
+
+  function startEdit(product: Product) {
+    setEditingId(product.id);
+    setEditingImages(product.image_urls || []);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setForm({ name: product.name || "", description: product.description || "", price: product.price && product.price > 0 ? String(product.price) : "", image: "", sizes: (product.sizes || []).join(", "), colors: (product.colors || []).join(", "), stock: String(product.stock ?? 0) });
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditingImages([]);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setForm(blank);
   }
 
   async function toggleProduct(product: Product) {
@@ -140,7 +163,7 @@ export default function AdminPage() {
             {tab === "products" ? (
               <div className="mt-6 grid gap-6 lg:grid-cols-[.85fr_1.15fr]">
                 <form onSubmit={saveProduct} className="h-fit space-y-3 rounded-2xl border border-[#e9e0d5] bg-white p-5">
-                  <h2 className="text-xl font-bold">إضافة منتج جديد</h2>
+                  <h2 className="text-xl font-bold">{editingId ? "تعديل المنتج" : "إضافة منتج جديد"}</h2>
                   <label className="block text-sm">اسم المنتج<input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">وصف المنتج<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 w-full rounded-xl border p-3" rows={3} /></label>
                   <label className="block text-sm">السعر بالجنيه (اختياري)<input type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
@@ -158,7 +181,8 @@ export default function AdminPage() {
                   <label className="block text-sm">المقاسات (افصل بينها بفاصلة)<input value={form.sizes} onChange={e => setForm({ ...form, sizes: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">الألوان (افصل بينها بفاصلة)<input value={form.colors} onChange={e => setForm({ ...form, colors: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">المخزون<input type="number" min="0" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
-                  <button disabled={saving} className="w-full rounded-full bg-[#1E1E1E] py-3 text-white disabled:opacity-50">{saving ? "جارٍ الحفظ…" : "حفظ المنتج"}</button>
+                  <button disabled={saving} className="w-full rounded-full bg-[#1E1E1E] py-3 text-white disabled:opacity-50">{saving ? "جارٍ الحفظ…" : editingId ? "حفظ التعديلات" : "حفظ المنتج"}</button>
+                  {editingId && <button type="button" onClick={cancelEdit} className="w-full rounded-full border py-3">إلغاء التعديل</button>}
                 </form>
                 <section className="space-y-3">
                   <h2 className="text-xl font-bold">كل المنتجات</h2>
@@ -166,6 +190,7 @@ export default function AdminPage() {
                   {products.map(p => <article key={p.id} className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4">
                     {p.image_urls?.[0] ? <img src={p.image_urls[0]} alt={p.name} className="h-24 w-20 rounded-xl object-cover" /> : <div className="flex h-24 w-20 items-center justify-center rounded-xl bg-[#F2ECE4] text-xs">بدون صورة</div>}
                     <div className="min-w-0 flex-1"><h3 className="font-bold">{p.name}</h3><p className="mt-1 text-sm text-[#71685E]">{Number(p.price || 0) > 0 ? `${Number(p.price).toLocaleString("ar-EG")} ج.م` : "السعر غير مُعرّف حاليًا"} · المخزون: {p.stock ?? 0}</p><p className="mt-1 text-xs text-[#71685E]">{p.is_active ? "ظاهر للزوار" : "مخفي"}</p></div>
+                    <button onClick={() => startEdit(p)} className="rounded-full border border-[#B8860B] px-4 py-2 text-sm">تعديل</button>
                     <button onClick={() => void toggleProduct(p)} className="rounded-full border px-4 py-2 text-sm">{p.is_active ? "إخفاء" : "إظهار"}</button>
                     <button onClick={() => void deleteProduct(p)} className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-700">حذف</button>
                   </article>)}
