@@ -19,15 +19,23 @@ export async function GET(request: NextRequest) {
   const endpoint = isAdmin
     ? `${url}/rest/v1/products?select=*&order=created_at.desc`
     : `${url}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`;
-  const response = await fetch(endpoint, {
-    headers: isAdmin
-      ? { apikey: serviceKey!, Authorization: `Bearer ${serviceKey}` }
-      : { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! },
-    cache: "no-store",
-  });
-  if (!response.ok) return NextResponse.json({ error: "تعذر تحميل المنتجات." }, { status: 502 });
-  const products = await response.json();
-  return NextResponse.json({ products }, { headers: { "Cache-Control": "no-store" } });
+  try {
+    const response = await fetch(endpoint, {
+      headers: isAdmin
+        ? { apikey: serviceKey!, Authorization: `Bearer ${serviceKey}` }
+        : { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! },
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const detail = (await response.text()).slice(0, 500);
+      return NextResponse.json({ error: "تعذر تحميل المنتجات.", supabaseStatus: response.status, detail }, { status: 502 });
+    }
+    const products = await response.json();
+    return NextResponse.json({ products }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown fetch error";
+    return NextResponse.json({ error: "تعذر الاتصال بقاعدة البيانات.", detail: message.slice(0, 300) }, { status: 502 });
+  }
 }
 
 export async function POST(request: NextRequest) {
