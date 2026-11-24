@@ -62,7 +62,11 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(product),
       cache: "no-store",
     });
-    if (!response.ok) return NextResponse.json({ error: "تعذرت إضافة المنتج." }, { status: 502 });
+    if (!response.ok) {
+      const detail = (await response.text()).slice(0, 1000);
+      console.error("Product insert failed:", response.status, detail);
+      return NextResponse.json({ error: "تعذرت إضافة المنتج.", supabaseStatus: response.status }, { status: 502 });
+    }
     return NextResponse.json({ product: (await response.json())[0] }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "بيانات المنتج غير صحيحة." }, { status: 400 });
