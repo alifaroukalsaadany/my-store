@@ -4,13 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 type Lang = "ar" | "en";
-type Product = { id: string; nameAr: string; nameEn: string; category: string; image: string; colors: string[]; sizes: string[] };
+type Product = { id: string; nameAr: string; nameEn: string; category: string; image: string; colors: string[]; sizes: string[]; price?: number; description?: string };
 type Order = { id: string; createdAt: string; name: string; phone: string; address: string; product: string; color: string; size: string; notes: string };
 
 const WA = "201004151517";
 const ADDRESS = "حدائق حلوان - شارع توتنجي - بجوار بن الغرباوي";
 const initialProducts: Product[] = [
-  { id:"p1", nameAr:"قميص كاروهات برباط", nameEn:"Plaid Tie-Front Shirt", category:"outfits", image:"/images/1.jpg", colors:["زيتي","نبيتي"], sizes:["S","M","L","XL"] },
+  { id:"p1", nameAr:"قميص كاروهات برباط", nameEn:"Plaid Tie-Front Shirt", category:"outfits", image:"", colors:["زيتي","نبيتي"], sizes:["S","M","L","XL"] },
   { id:"p2", nameAr:"هودي تريكو مضفّر", nameEn:"Cable-Knit Hoodie", category:"knit", image:"/images/2.jpg", colors:["رمادي","أوف وايت","وردي"], sizes:["S","M","L","XL"] },
   { id:"p3", nameAr:"قميص مطبوع", nameEn:"Printed Shirt", category:"shirts", image:"/images/3.jpg", colors:["أزرق","بيج"], sizes:["S","M","L","XL"] },
   { id:"p4", nameAr:"قميص كتان أصفر", nameEn:"Yellow Linen Shirt", category:"shirts", image:"/images/4.jpg", colors:["أصفر"], sizes:["S","M","L","XL"] },
@@ -54,7 +54,7 @@ function makeId() {
 export default function Home() {
   const [lang, setLang] = useState<Lang>("ar");
   const [preview, setPreview] = useState(false);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(initialProducts);\n  const [productsLoading, setProductsLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState<Product | null>(null);
   const [done, setDone] = useState<Order | null>(null);
@@ -135,7 +135,7 @@ export default function Home() {
   function addProduct(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const file = (e.currentTarget.elements.namedItem("newImage") as HTMLInputElement)?.files?.[0];
-    const url = file ? URL.createObjectURL(file) : "/images/1.jpg";
+    const url = file ? URL.createObjectURL(file) : "";
     setProducts(old => [{ id:makeId(), nameAr:newPiece.nameAr || "قطعة جديدة", nameEn:newPiece.nameEn || "New piece", category:newPiece.category, image:url, colors:["متعدد"], sizes:["S","M","L","XL"] }, ...old]);
     setAddOpen(false); setNewPiece({nameAr:"",nameEn:"",category:"shirts"});
   }
@@ -165,7 +165,7 @@ export default function Home() {
             <a href="#collection" className="mt-8 inline-flex rounded-full bg-[#1E1E1E] px-7 py-3 text-white transition hover:bg-[#B8860B]">{t.collection}</a>
           </div>
           <div className="rounded-[2rem] bg-[#F2ECE4] p-3 shadow-sm">
-            <img src="/images/4.jpg" alt="Level Women Wear collection" className="h-[390px] w-full rounded-[1.5rem] object-cover md:h-[510px]" onError={e => { e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='700'%3E%3Crect width='100%25' height='100%25' fill='%23e9dfd2'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%239b8b78' font-size='28'%3ELEVEL%3C/text%3E%3C/svg%3E"; }} />
+            <img src="" alt="Level Women Wear collection" className="h-[390px] w-full rounded-[1.5rem] object-cover md:h-[510px]" onError={e => { e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='700'%3E%3Crect width='100%25' height='100%25' fill='%23e9dfd2'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%239b8b78' font-size='28'%3ELEVEL%3C/text%3E%3C/svg%3E"; }} />
           </div>
         </div>
       </section>
@@ -184,12 +184,12 @@ export default function Home() {
             </div>
             <div className="p-5">
               <h3 className="text-lg font-semibold">{isAr ? product.nameAr : product.nameEn}</h3>
-              <p className="mt-2 text-sm text-[#8A8176]">{t.unknown}</p>
+              <p className="mt-2 text-sm text-[#8A8176]">{product.price && product.price > 0 ? `${product.price.toLocaleString("ar-EG")} ج.م` : t.unknown}</p>
               <button onClick={() => openOrder(product)} className="mt-5 w-full rounded-full bg-[#1E1E1E] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#B8860B]">{t.order}</button>
             </div>
           </article>)}
         </div>
-        {visibleProducts.length===0 && <p className="py-16 text-center text-[#82776b]">{t.empty}</p>}
+        {productsLoading && <p className="py-16 text-center text-[#82776b]">جارٍ تحميل المنتجات…</p>}\n        {!productsLoading && visibleProducts.length===0 && <p className="py-16 text-center text-[#82776b]">{t.empty}</p>}
       </section>
 
       <section className="bg-[#F2ECE4]">
