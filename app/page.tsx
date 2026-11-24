@@ -14,7 +14,7 @@ const initialProducts: Product[] = [];
 const copy = {
   ar: {
     tagline:"أناقة يومية بتفاصيل راقية", collection:"تسوقي المجموعة", all:"كل القطع", shirts:"قمصان وكاجوال", knit:"تريكو وجواكت", outfits:"أطقم خروج",
-    preview:"وضع المعاينة", add:"إضافة قطعة جديدة", change:"تغيير الصورة", order:"اطلبي الآن مباشرة", unknown:"السعر: غير معروف",
+    preview:"وضع المعاينة", add:"إضافة قطعة جديدة", change:"تغيير الصورة", order:"اطلبي الآن مباشرة", unknown:"السعر غير مُعرّف حاليًا",
     location:"زورينا في المتجر", address:ADDRESS, whatsapp:"تواصلي عبر واتساب", benefitTitle:"تسوق أسهل… ووقتك أغلى",
     benefit:"اطلبي من مكانك بدل مشوار طويل من المناطق البعيدة، وسجّلي طلبك مباشرة دون انتظار الرد على رسائل السوشيال ميديا.",
     owner:"إشعارات الإدارة", ownerKey:"مفتاح الإدارة", load:"عرض الطلبات", close:"إغلاق", noOrders:"لا توجد طلبات حتى الآن.",
@@ -22,7 +22,7 @@ const copy = {
     color:"اللون", size:"المقاس", notes:"ملاحظات إضافية", submit:"تأكيد الطلب", cancel:"إلغاء", success:"تم تسجيل طلبك بنجاح",
     orderId:"رقم الطلب", summary:"ملخص الطلب", forward:"إرسال الملخص إلى واتساب", required:"يرجى استكمال البيانات المطلوبة.",
     newNameAr:"اسم القطعة بالعربية", newNameEn:"اسم القطعة بالإنجليزية", category:"التصنيف", save:"إضافة القطعة", shirtsOpt:"قمصان وكاجوال", knitOpt:"تريكو وجواكت", outfitsOpt:"أطقم خروج",
-    adminHint:"أدخلي مفتاح الإدارة لعرض الطلبات المحفوظة.", empty:"اكتشفي قطعنا المختارة بعناية.", priceLine:"السعر: غير معروف"
+    adminHint:"أدخلي مفتاح الإدارة لعرض الطلبات المحفوظة.", empty:"اكتشفي قطعنا المختارة بعناية.", priceLine:"السعر غير مُعرّف حاليًا"
   },
   en: {
     tagline:"Everyday elegance, thoughtfully detailed", collection:"Shop the collection", all:"All pieces", shirts:"Shirts & Casual", knit:"Knitwear & Jackets", outfits:"Outfits",
