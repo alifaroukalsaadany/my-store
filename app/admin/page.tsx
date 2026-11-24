@@ -25,8 +25,8 @@ export default function AdminPage() {
   const [tab, setTab] = useState<"products" | "orders">("products");
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState("");
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   async function api(path: string, init: RequestInit = {}) {
     const response = await fetch(path, {
@@ -54,28 +54,28 @@ export default function AdminPage() {
   async function saveProduct(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setSaving(true); setError("");
     try {
-      let imageUrl = form.image.trim();
-      if (imageFile) {
-        const blob = await upload(imageFile.name, imageFile, {
+      let imageUrls = form.image.trim() ? [form.image.trim()] : [];
+      if (imageFiles.length) {
+        const uploaded = await Promise.all(imageFiles.map(file => upload(file.name, file, {
           access: "public",
           handleUploadUrl: "/api/upload",
           clientPayload: key,
-        });
-        imageUrl = blob.url;
+        })));
+        imageUrls = uploaded.map(blob => blob.url);
       }
       await api("/api/products", {
         method: "POST",
         body: JSON.stringify({
           name: form.name, description: form.description, price: form.price.trim() === "" ? 0 : Number(form.price),
-          image_urls: imageUrl ? [imageUrl] : [],
+          image_urls: imageUrls,
           sizes: form.sizes.split(",").map(x => x.trim()).filter(Boolean),
           colors: form.colors.split(",").map(x => x.trim()).filter(Boolean),
           stock: Number(form.stock), is_active: true,
         }),
       });
       setForm(blank);
-      setImageFile(null);
-      setImagePreview("");
+      setImageFiles([]);
+      setImagePreviews([]);
       const p = await api("/api/products?admin=1");
       setProducts(p.products || []);
     } catch (e) { setError(e instanceof Error ? e.message : "تعذرت إضافة المنتج."); }
@@ -145,16 +145,16 @@ export default function AdminPage() {
                   <label className="block text-sm">وصف المنتج<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 w-full rounded-xl border p-3" rows={3} /></label>
                   <label className="block text-sm">السعر بالجنيه (اختياري)<input type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">صورة المنتج
-                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => {
-                      const file = e.target.files?.[0] || null;
-                      setImageFile(file);
-                      setImagePreview(file ? URL.createObjectURL(file) : "");
-                      if (file) setForm({ ...form, image: "" });
+                    <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => {
+                      const files = Array.from(e.target.files || []);
+                      setImageFiles(files);
+                      setImagePreviews(files.map(file => URL.createObjectURL(file)));
+                      if (files.length) setForm({ ...form, image: "" });
                     }} className="mt-1 w-full rounded-xl border p-3" />
                   </label>
-                  {imagePreview && <img src={imagePreview} alt="معاينة صورة المنتج" className="h-40 w-full rounded-xl object-contain bg-[#F2ECE4]" />}
-                  <p className="text-xs text-[#71685E]">JPG أو PNG أو WebP — بحد أقصى 8 ميجابايت.</p>
-                  <label className="block text-xs text-[#71685E]">أو رابط صورة موجود<input value={form.image} onChange={e => { setForm({ ...form, image: e.target.value }); if (e.target.value) { setImageFile(null); setImagePreview(""); } }} placeholder="https://..." className="mt-1 w-full rounded-xl border p-3 text-sm" /></label>
+                  {imagePreviews.length > 0 && <div className="grid grid-cols-3 gap-2">{imagePreviews.map((src, index) => <img key={src} src={src} alt={`معاينة الصورة ${index + 1}`} className="h-28 w-full rounded-xl object-cover bg-[#F2ECE4]" />)}</div>}
+                  <p className="text-xs text-[#71685E]">يمكن اختيار أكثر من صورة مرة واحدة — JPG أو PNG أو WebP، بحد أقصى 8 ميجابايت للصورة.</p>
+                  <label className="block text-xs text-[#71685E]">أو رابط صورة موجود<input value={form.image} onChange={e => { setForm({ ...form, image: e.target.value }); if (e.target.value) { setImageFiles([]); setImagePreviews([]); } }} placeholder="https://..." className="mt-1 w-full rounded-xl border p-3 text-sm" /></label>
                   <label className="block text-sm">المقاسات (افصل بينها بفاصلة)<input value={form.sizes} onChange={e => setForm({ ...form, sizes: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">الألوان (افصل بينها بفاصلة)<input value={form.colors} onChange={e => setForm({ ...form, colors: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">المخزون<input type="number" min="0" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
