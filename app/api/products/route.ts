@@ -13,10 +13,10 @@ function unavailable() {
   return NextResponse.json({ error: "إعدادات قاعدة البيانات غير مكتملة." }, { status: 503 });
 }
 
-export async function GET() {
-  if (!url || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return unavailable();
-  const response = await fetch(`${url}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`, {
-    headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! },
+export async function GET(request: NextRequest) {
+  if (!url || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || (admin(request) && !serviceKey)) return unavailable();
+  const isAdmin = admin(request);\n  const endpoint = isAdmin\n    ? `${url}/rest/v1/products?select=*&order=created_at.desc`\n    : `${url}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`;\n  const response = await fetch(endpoint, {
+    headers: isAdmin\n      ? { apikey: serviceKey!, Authorization: `Bearer ${serviceKey}` }\n      : { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! },
     cache: "no-store",
   });
   if (!response.ok) return NextResponse.json({ error: "تعذر تحميل المنتجات." }, { status: 502 });
