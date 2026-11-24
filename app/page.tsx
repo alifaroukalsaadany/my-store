@@ -64,6 +64,26 @@ export default function Home() {
   const visibleProducts = useMemo(() => products.filter(p => filter === "all" || p.category === filter), [products, filter]);
 
   useEffect(() => {
+    let active = true;
+    fetch("/api/products", { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("Products unavailable");
+        const data = await response.json();
+        const mapped: Product[] = (data.products || []).map((p: any) => ({
+          id: String(p.id), nameAr: p.name, nameEn: p.name, category: "shirts",
+          image: Array.isArray(p.image_urls) && p.image_urls[0] ? p.image_urls[0] : "",
+          colors: Array.isArray(p.colors) ? p.colors : [],
+          sizes: Array.isArray(p.sizes) ? p.sizes : [],
+          price: Number(p.price || 0), description: p.description || ""
+        }));
+        if (active) setProducts(mapped);
+      })
+      .catch(() => { if (active) setProducts([]); })
+      .finally(() => { if (active) setProductsLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = isAr ? "rtl" : "ltr";
   }, [lang, isAr]);
