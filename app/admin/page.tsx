@@ -7,7 +7,7 @@ type Order = {
   product: string; color: string; size: string; notes: string;
 };
 type Product = {
-  id: string; name: string; description: string; price: number;
+  id: string; name: string; description: string; price: number | null;
   image_urls: string[]; sizes: string[]; colors: string[]; stock: number; is_active: boolean;
 };
 
@@ -54,7 +54,7 @@ export default function AdminPage() {
       await api("/api/products", {
         method: "POST",
         body: JSON.stringify({
-          name: form.name, description: form.description, price: Number(form.price),
+          name: form.name, description: form.description, price: form.price.trim() === "" ? 0 : Number(form.price),
           image_urls: form.image ? [form.image] : [],
           sizes: form.sizes.split(",").map(x => x.trim()).filter(Boolean),
           colors: form.colors.split(",").map(x => x.trim()).filter(Boolean),
@@ -129,7 +129,7 @@ export default function AdminPage() {
                   <h2 className="text-xl font-bold">إضافة منتج جديد</h2>
                   <label className="block text-sm">اسم المنتج<input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">وصف المنتج<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 w-full rounded-xl border p-3" rows={3} /></label>
-                  <label className="block text-sm">السعر بالجنيه<input required type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
+                  <label className="block text-sm">السعر بالجنيه (اختياري)<input type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">رابط صورة المنتج<input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} placeholder="https://..." className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">المقاسات (افصل بينها بفاصلة)<input value={form.sizes} onChange={e => setForm({ ...form, sizes: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">الألوان (افصل بينها بفاصلة)<input value={form.colors} onChange={e => setForm({ ...form, colors: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
@@ -141,7 +141,7 @@ export default function AdminPage() {
                   {products.length === 0 && <p className="rounded-2xl border border-dashed bg-white p-8 text-center text-[#71685E]">لا توجد منتجات مسجلة في قاعدة البيانات.</p>}
                   {products.map(p => <article key={p.id} className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4">
                     {p.image_urls?.[0] ? <img src={p.image_urls[0]} alt={p.name} className="h-24 w-20 rounded-xl object-cover" /> : <div className="flex h-24 w-20 items-center justify-center rounded-xl bg-[#F2ECE4] text-xs">بدون صورة</div>}
-                    <div className="min-w-0 flex-1"><h3 className="font-bold">{p.name}</h3><p className="mt-1 text-sm text-[#71685E]">{Number(p.price || 0).toLocaleString("ar-EG")} ج.م · المخزون: {p.stock ?? 0}</p><p className="mt-1 text-xs text-[#71685E]">{p.is_active ? "ظاهر للزوار" : "مخفي"}</p></div>
+                    <div className="min-w-0 flex-1"><h3 className="font-bold">{p.name}</h3><p className="mt-1 text-sm text-[#71685E]">{Number(p.price || 0) > 0 ? `${Number(p.price).toLocaleString("ar-EG")} ج.م` : "السعر غير مُعرّف حاليًا"} · المخزون: {p.stock ?? 0}</p><p className="mt-1 text-xs text-[#71685E]">{p.is_active ? "ظاهر للزوار" : "مخفي"}</p></div>
                     <button onClick={() => void toggleProduct(p)} className="rounded-full border px-4 py-2 text-sm">{p.is_active ? "إخفاء" : "إظهار"}</button>
                     <button onClick={() => void deleteProduct(p)} className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-700">حذف</button>
                   </article>)}
