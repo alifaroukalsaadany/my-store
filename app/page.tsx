@@ -9,16 +9,7 @@ type Order = { id: string; createdAt: string; name: string; phone: string; addre
 
 const WA = "201004151517";
 const ADDRESS = "حدائق حلوان - شارع توتنجي - بجوار بن الغرباوي";
-const initialProducts: Product[] = [
-  { id:"p1", nameAr:"قميص كاروهات برباط", nameEn:"Plaid Tie-Front Shirt", category:"outfits", image:"", colors:["زيتي","نبيتي"], sizes:["S","M","L","XL"] },
-  { id:"p2", nameAr:"هودي تريكو مضفّر", nameEn:"Cable-Knit Hoodie", category:"knit", image:"/images/2.jpg", colors:["رمادي","أوف وايت","وردي"], sizes:["S","M","L","XL"] },
-  { id:"p3", nameAr:"قميص مطبوع", nameEn:"Printed Shirt", category:"shirts", image:"/images/3.jpg", colors:["أزرق","بيج"], sizes:["S","M","L","XL"] },
-  { id:"p4", nameAr:"قميص كتان أصفر", nameEn:"Yellow Linen Shirt", category:"shirts", image:"/images/4.jpg", colors:["أصفر"], sizes:["S","M","L","XL"] },
-  { id:"p5", nameAr:"جاكيت بياقة جلد", nameEn:"Leather-Collar Jacket", category:"knit", image:"/images/5.jpg", colors:["أسود","بني"], sizes:["S","M","L","XL"] },
-  { id:"p6", nameAr:"هودي شتوي", nameEn:"Textured Winter Hoodie", category:"knit", image:"/images/6.jpg", colors:["أخضر","وردي"], sizes:["S","M","L","XL"] },
-  { id:"p7", nameAr:"قميص كتان وردي", nameEn:"Pink Linen Shirt", category:"shirts", image:"/images/7.jpg", colors:["وردي"], sizes:["S","M","L","XL"] },
-  { id:"p8", nameAr:"قميص مطبوع ناعم", nameEn:"Soft Printed Shirt", category:"shirts", image:"/images/8.jpg", colors:["أوف وايت"], sizes:["S","M","L","XL"] },
-];
+const initialProducts: Product[] = [];
 
 const copy = {
   ar: {
