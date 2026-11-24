@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 type Lang = "ar" | "en";
-type Product = { id: string; nameAr: string; nameEn: string; category: string; image: string; colors: string[]; sizes: string[]; price?: number; description?: string };
+type Product = { id: string; nameAr: string; nameEn: string; category: string; image: string; images: string[]; colors: string[]; sizes: string[]; price?: number; description?: string };
 type Order = { id: string; createdAt: string; name: string; phone: string; address: string; product: string; color: string; size: string; notes: string };
 
 const WA = "201004151517";
@@ -48,6 +48,8 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productsLoading, setProductsLoading] = useState(true);
   const [heroImage, setHeroImage] = useState("");
+  const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({});
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState<Product | null>(null);
   const [done, setDone] = useState<Order | null>(null);
@@ -74,6 +76,7 @@ export default function Home() {
         const mapped: Product[] = (data.products || []).map((p: any) => ({
           id: String(p.id), nameAr: p.name, nameEn: p.name, category: "shirts",
           image: Array.isArray(p.image_urls) && p.image_urls[0] ? p.image_urls[0] : "",
+          images: Array.isArray(p.image_urls) ? p.image_urls.filter((url: any) => typeof url === "string" && url.length > 0) : [],
           colors: Array.isArray(p.colors) ? p.colors : [],
           sizes: Array.isArray(p.sizes) ? p.sizes : [],
           price: Number(p.price || 0), description: p.description || ""
@@ -90,6 +93,28 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!products.some(product => product.images.length > 1)) return;
+    const timer = window.setInterval(() => {
+      setImageIndexes(current => {
+        const next = { ...current };
+        for (const product of products) {
+          if (product.images.length > 1) next[product.id] = ((current[product.id] || 0) + 1) % product.images.length;
+        }
+        return next;
+      });
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [products]);
+
+  useEffect(() => {
+    if (!selected || selected.images.length < 2) return;
+    const timer = window.setInterval(() => {
+      setSelectedImageIndex(index => (index + 1) % selected.images.length);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [selected]);
+
+  useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = isAr ? "rtl" : "ltr";
   }, [lang, isAr]);
@@ -97,10 +122,11 @@ export default function Home() {
   function uploadFor(id: string, file?: File) {
     if (!file || !file.type.startsWith("image/")) return;
     const url = URL.createObjectURL(file);
-    setProducts(old => old.map(p => p.id === id ? { ...p, image:url } : p));
+    setProducts(old => old.map(p => p.id === id ? { ...p, image:url, images:[url] } : p));
   }
 
   function openOrder(product: Product) {
+    setSelectedImageIndex(0);
     setSelected(product);
     setForm({ name:"", phone:"", address:"", color:product.colors[0] || "غير محدد", size:product.sizes[0] || "غير محدد", notes:"" });
     setDone(null);
@@ -153,7 +179,7 @@ export default function Home() {
     e.preventDefault();
     const file = (e.currentTarget.elements.namedItem("newImage") as HTMLInputElement)?.files?.[0];
     const url = file ? URL.createObjectURL(file) : "";
-    setProducts(old => [{ id:makeId(), nameAr:newPiece.nameAr || "قطعة جديدة", nameEn:newPiece.nameEn || "New piece", category:newPiece.category, image:url, colors:["متعدد"], sizes:["S","M","L","XL"] }, ...old]);
+    setProducts(old => [{ id:makeId(), nameAr:newPiece.nameAr || "قطعة جديدة", nameEn:newPiece.nameEn || "New piece", category:newPiece.category, image:url, images:url ? [url] : [], colors:["متعدد"], sizes:["S","M","L","XL"] }, ...old]);
     setAddOpen(false); setNewPiece({nameAr:"",nameEn:"",category:"shirts"});
   }
 
@@ -197,7 +223,14 @@ export default function Home() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleProducts.map(product => <article key={product.id} className="group overflow-hidden rounded-2xl border border-[#e9e0d5] bg-white shadow-[0_8px_30px_rgba(54,42,25,.04)]">
             <div className="relative bg-[#F2ECE4]">
-              {product.image ? <img src={product.image} alt={isAr ? product.nameAr : product.nameEn} className="h-[330px] w-full object-cover transition duration-500 group-hover:scale-[1.02]" /> : <div className="flex h-[330px] items-center justify-center bg-[#E9DFD2] text-3xl font-black tracking-[.2em] text-[#9B8B78]">LEVEL</div>}
+              {product.images.length ? <div className="relative h-[330px] w-full">
+                {product.images.map((src, index) => <img key={src + index} src={src} alt={isAr ? product.nameAr : product.nameEn} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${index === (imageIndexes[product.id] || 0) ? "opacity-100" : "opacity-0"}`} />)}
+                {product.images.length > 1 && <>
+                  <button type="button" aria-label="Previous image" onClick={e => { e.stopPropagation(); setImageIndexes(old => ({ ...old, [product.id]: ((old[product.id] || 0) - 1 + product.images.length) % product.images.length })); }} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">‹</button>
+                  <button type="button" aria-label="Next image" onClick={e => { e.stopPropagation(); setImageIndexes(old => ({ ...old, [product.id]: ((old[product.id] || 0) + 1) % product.images.length })); }} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">›</button>
+                  <span className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{(imageIndexes[product.id] || 0) + 1} / {product.images.length}</span>
+                </>}
+              </div> : <div className="flex h-[330px] items-center justify-center bg-[#E9DFD2] text-3xl font-black tracking-[.2em] text-[#9B8B78]">LEVEL</div>}
             </div>
             <div className="p-5">
               <h3 className="text-lg font-semibold">{isAr ? product.nameAr : product.nameEn}</h3>
@@ -226,6 +259,16 @@ export default function Home() {
       {selected && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-5" onMouseDown={e => {if(e.target===e.currentTarget){setSelected(null);setDone(null);}}}>
         <section className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-[#FAF8F5] p-6 sm:rounded-3xl">
           <div className="flex items-center justify-between"><h2 className="text-2xl font-semibold">{done ? t.success : t.formTitle}</h2><button onClick={() => {setSelected(null);setDone(null);}} className="rounded-full p-2 text-xl">×</button></div>
+          {!done && selected.images.length > 0 && <div className="relative mt-5 overflow-hidden rounded-2xl bg-[#F2ECE4]">
+            <div className="relative h-[280px] w-full">
+              {selected.images.map((src, index) => <img key={src + index} src={src} alt={selected.nameAr} className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${index === selectedImageIndex ? "opacity-100" : "opacity-0"}`} />)}
+              {selected.images.length > 1 && <>
+                <button type="button" aria-label="Previous image" onClick={() => setSelectedImageIndex(index => (index - 1 + selected.images.length) % selected.images.length)} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">‹</button>
+                <button type="button" aria-label="Next image" onClick={() => setSelectedImageIndex(index => (index + 1) % selected.images.length)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">›</button>
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{selectedImageIndex + 1} / {selected.images.length}</span>
+              </>}
+            </div>
+          </div>}
           {done ? <div className="mt-6">
             <p className="rounded-xl bg-[#F2ECE4] p-4">{t.orderId}: <b dir="ltr">{done.id}</b></p>
             <h3 className="mt-5 font-semibold">{t.summary}</h3><p className="mt-3 leading-8">{done.product}<br/>{t.customer}: {done.name}<br/>{t.phone}: {done.phone}<br/>{t.area}: {done.address}<br/>{t.color}: {done.color} · {t.size}: {done.size}<br/>{t.priceLine}</p>
