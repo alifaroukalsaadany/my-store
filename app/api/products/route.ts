@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ownerKey = process.env.OWNER_ACCESS_KEY_V3 || process.env.OWNER_ACCESS_KEY_V2 || process.env.OWNER_ACCESS_KEY;
+const ownerKey = process.env.OWNER_ACCESS_KEY_V4 || process.env.OWNER_ACCESS_KEY_V3 || process.env.OWNER_ACCESS_KEY_V2 || process.env.OWNER_ACCESS_KEY;
 
 function admin(request: NextRequest) {
   const supplied = request.headers.get("x-owner-key");
