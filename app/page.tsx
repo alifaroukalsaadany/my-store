@@ -45,7 +45,8 @@ function makeId() {
 export default function Home() {
   const [lang, setLang] = useState<Lang>("ar");
   const [preview, setPreview] = useState(false);
-  const [products, setProducts] = useState<Product[]>(initialProducts);\n  const [productsLoading, setProductsLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState<Product | null>(null);
   const [done, setDone] = useState<Order | null>(null);
@@ -200,7 +201,8 @@ export default function Home() {
             </div>
           </article>)}
         </div>
-        {productsLoading && <p className="py-16 text-center text-[#82776b]">جارٍ تحميل المنتجات…</p>}\n        {!productsLoading && visibleProducts.length===0 && <p className="py-16 text-center text-[#82776b]">{t.empty}</p>}
+        {productsLoading && <p className="py-16 text-center text-[#82776b]">جارٍ تحميل المنتجات…</p>}
+        {!productsLoading && visibleProducts.length===0 && <p className="py-16 text-center text-[#82776b]">{t.empty}</p>}
       </section>
 
       <section className="bg-[#F2ECE4]">
