@@ -47,6 +47,7 @@ export default function Home() {
   const [preview, setPreview] = useState(false);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [heroImage, setHeroImage] = useState("");
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState<Product | null>(null);
   const [done, setDone] = useState<Order | null>(null);
@@ -77,7 +78,11 @@ export default function Home() {
           sizes: Array.isArray(p.sizes) ? p.sizes : [],
           price: Number(p.price || 0), description: p.description || ""
         }));
-        if (active) setProducts(mapped);
+        if (active) {
+          setProducts(mapped);
+          const heroImages = mapped.map(p => p.image).filter(Boolean);
+          if (heroImages.length) setHeroImage(heroImages[Math.floor(Math.random() * heroImages.length)]);
+        }
       })
       .catch(() => { if (active) setProducts([]); })
       .finally(() => { if (active) setProductsLoading(false); });
@@ -177,7 +182,7 @@ export default function Home() {
             <a href="#collection" className="mt-8 inline-flex rounded-full bg-[#1E1E1E] px-7 py-3 text-white transition hover:bg-[#B8860B]">{t.collection}</a>
           </div>
           <div className="rounded-[2rem] bg-[#F2ECE4] p-3 shadow-sm">
-            <img src="" alt="Level Women Wear collection" className="h-[390px] w-full rounded-[1.5rem] object-cover md:h-[510px]" onError={e => { e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='700'%3E%3Crect width='100%25' height='100%25' fill='%23e9dfd2'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%239b8b78' font-size='28'%3ELEVEL%3C/text%3E%3C/svg%3E"; }} />
+            {heroImage ? <img src={heroImage} alt="Level Women Wear collection" className="h-[390px] w-full rounded-[1.5rem] object-cover md:h-[510px]" /> : <div className="flex h-[390px] items-center justify-center rounded-[1.5rem] bg-[#E9DFD2] text-3xl font-black tracking-[.2em] text-[#9B8B78] md:h-[510px]">LEVEL</div>}
           </div>
         </div>
       </section>
