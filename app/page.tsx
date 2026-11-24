@@ -191,7 +191,7 @@ export default function Home() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleProducts.map(product => <article key={product.id} className="group overflow-hidden rounded-2xl border border-[#e9e0d5] bg-white shadow-[0_8px_30px_rgba(54,42,25,.04)]">
             <div className="relative bg-[#F2ECE4]">
-              <img src={product.image} alt={isAr ? product.nameAr : product.nameEn} className="h-[330px] w-full object-cover transition duration-500 group-hover:scale-[1.02]" onError={e => { e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='700'%3E%3Crect width='100%25' height='100%25' fill='%23e9dfd2'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%239b8b78' font-size='28'%3ELEVEL%3C/text%3E%3C/svg%3E"; }} />
+              {product.image ? <img src={product.image} alt={isAr ? product.nameAr : product.nameEn} className="h-[330px] w-full object-cover transition duration-500 group-hover:scale-[1.02]" /> : <div className="flex h-[330px] items-center justify-center bg-[#E9DFD2] text-3xl font-black tracking-[.2em] text-[#9B8B78]">LEVEL</div>}
             </div>
             <div className="p-5">
               <h3 className="text-lg font-semibold">{isAr ? product.nameAr : product.nameEn}</h3>
@@ -224,7 +224,7 @@ export default function Home() {
             <h3 className="mt-5 font-semibold">{t.summary}</h3><p className="mt-3 leading-8">{done.product}<br/>{t.customer}: {done.name}<br/>{t.phone}: {done.phone}<br/>{t.area}: {done.address}<br/>{t.color}: {done.color} · {t.size}: {done.size}<br/>{t.priceLine}</p>
             <button onClick={() => forwardWhatsApp(done)} className="mt-6 w-full rounded-full bg-[#1E1E1E] px-5 py-3 text-white">{t.forward}</button>
           </div> : <form onSubmit={submitOrder} className="mt-6 space-y-4">
-            <p className="rounded-xl bg-[#F2ECE4] p-3">{isAr ? selected.nameAr : selected.nameEn} · {t.unknown}</p>
+            <p className="rounded-xl bg-[#F2ECE4] p-3">{isAr ? selected.nameAr : selected.nameEn} · {product.price && product.price > 0 ? `${product.price.toLocaleString("ar-EG")} ج.م` : t.unknown}</p>
             <label className="block text-sm">{t.customer}<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
             <label className="block text-sm">{t.phone}<input required type="tel" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
             <label className="block text-sm">{t.area}<textarea required value={form.address} onChange={e=>setForm({...form,address:e.target.value})} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-white p-3"/></label>
