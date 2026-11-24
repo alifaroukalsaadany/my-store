@@ -32,7 +32,7 @@ export default function AdminPage() {
       cache: "no-store",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "حدث خطأ. تأكد من إعداد قاعدة البيانات.");
+    if (!response.ok) throw new Error([data.error || "حدث خطأ. تأكد من إعداد قاعدة البيانات.", data.supabaseStatus ? `HTTP ${data.supabaseStatus}` : "", data.detail || ""].filter(Boolean).join(" — "));
     return data;
   }
 
