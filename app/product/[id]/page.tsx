@@ -26,7 +26,10 @@ export default function ProductDetailsPage() {
   const [quantity, setQuantity] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState("نقدًا عند الاستلام");
   const [paymentSettings, setPaymentSettings] = useState({ instapayAccount: "", walletNumber: "" });
-  const [customer, setCustomer] = useState({ name: "", phone: "", address: "", notes: "" });
+  const [customer, setCustomer] = useState({ name: "", phone: "", governorate: "", city: "", address: "", notes: "" });
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [senderNumber, setSenderNumber] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [cartMessage, setCartMessage] = useState("");
@@ -93,17 +96,31 @@ export default function ProductDetailsPage() {
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!product || !customer.name.trim() || !customer.phone.trim() || !customer.address.trim()) return;
+    if (!product || !customer.name.trim() || !customer.phone.trim() || !customer.governorate.trim() || !customer.city.trim() || !customer.address.trim()) return;
+    if (paymentMethod !== "نقدًا عند الاستلام" && (!senderNumber.trim() || !proofFile)) {
+      setError("اكتب رقم التحويل وارفع صورة التحويل قبل تأكيد الطلب.");
+      return;
+    }
     setSaving(true);
     setError("");
     const id = makeOrderId();
     const notes = [`الكمية: ${quantity}`, customer.notes.trim()].filter(Boolean).join("\n");
     try {
+      let proofImageUrl = "";
+      if (proofFile && paymentMethod !== "نقدًا عند الاستلام") {
+        const uploadForm = new FormData();
+        uploadForm.append("file", proofFile);
+        const uploadResponse = await fetch("/api/payment-proof-upload", { method: "POST", body: uploadForm });
+        const uploadData = await uploadResponse.json();
+        if (!uploadResponse.ok) throw new Error(uploadData.error || "تعذر رفع صورة التحويل.");
+        proofImageUrl = uploadData.url;
+      }
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id, name: customer.name.trim(), phone: customer.phone.trim(), address: customer.address.trim(),
+          id, name: customer.name.trim(), phone: customer.phone.trim(), governorate: customer.governorate, city: customer.city,
+          senderNumber, proofImageUrl, totalAmount: total, address: customer.address.trim(),
           product: product.name, color, size, paymentMethod, notes,
         }),
       });
@@ -157,7 +174,7 @@ export default function ProductDetailsPage() {
               <p className="mt-4 text-lg font-semibold text-[#8A8176]">{price > 0 ? `${price.toLocaleString("ar-EG")} ج.م` : "السعر غير مُعرّف حاليًا"}</p>
               {product.description && <p className="mt-5 whitespace-pre-wrap leading-8 text-[#71685E]">{product.description}</p>}
 
-              <form onSubmit={submitOrder} className="mt-7 space-y-5">
+              <div className="mt-7 space-y-5">
                 <div className="grid grid-cols-2 gap-3">
                   <label className="text-sm font-semibold">اللون
                     <select value={color} onChange={event => setColor(event.target.value)} className="mt-2 w-full rounded-xl border border-[#ded4c8] bg-[#FAF8F5] p-3">
@@ -184,7 +201,12 @@ export default function ProductDetailsPage() {
                 <button type="button" onClick={addToCart} className="w-full rounded-full border-2 border-[#1E1E1E] py-3 font-semibold transition hover:bg-[#F2ECE4]">أضف إلى عربة التسوق</button>
                 {cartMessage && <div role="status" aria-live="polite" className="fixed left-1/2 top-20 z-[70] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-[#d9c9a8] bg-white px-4 py-3 text-sm text-[#1E1E1E] shadow-xl"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8f2e8] text-lg text-[#287a36]">✓</span><span className="flex-1 font-semibold">{cartMessage}</span><a href="/cart" className="shrink-0 font-bold text-[#9B741C] underline">عرض العربة</a></div>}
 
-                <div className="border-t border-[#eee6dc] pt-5">
+                <button type="button" onClick={() => { setCheckoutOpen(true); setError(""); }} className="w-full rounded-full bg-[#1E1E1E] py-4 font-semibold text-white transition hover:bg-[#B8860B]">شراء الآن</button>
+                {checkoutOpen && <form onSubmit={submitOrder} className="fixed inset-0 z-[80] overflow-y-auto bg-black/50 p-3 sm:p-6">
+                  <div className="mx-auto my-4 max-w-xl rounded-3xl bg-white p-5 shadow-2xl sm:p-7">
+                    <div className="mb-5 flex items-center justify-between"><h2 className="text-xl font-bold">إتمام الشراء</h2><button type="button" onClick={() => setCheckoutOpen(false)} aria-label="إغلاق" className="text-2xl">×</button></div>
+                    <div className="mb-5 rounded-2xl bg-[#F2ECE4] p-4"><div className="flex justify-between"><span>المنتج</span><strong>{product.name}</strong></div><div className="mt-2 flex justify-between"><span>الكمية</span><strong>{quantity}</strong></div><div className="mt-2 flex justify-between text-lg"><span>إجمالي المبلغ</span><strong>{price > 0 ? `${total.toLocaleString("ar-EG")} ج.م` : "السعر غير مُعرّف حاليًا"}</strong></div></div>
+                    <div className="border-t border-[#eee6dc] pt-4">
                   <h2 className="text-lg font-bold">بيانات التوصيل</h2>
                   <label className="mt-4 block text-sm">الاسم
                     <input required value={customer.name} onChange={event => setCustomer(old => ({ ...old, name: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" />
@@ -192,7 +214,8 @@ export default function ProductDetailsPage() {
                   <label className="mt-3 block text-sm">رقم الهاتف / واتساب
                     <input required type="tel" value={customer.phone} onChange={event => setCustomer(old => ({ ...old, phone: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" />
                   </label>
-                  <label className="mt-3 block text-sm">عنوان التوصيل
+                  <div className="mt-3 grid grid-cols-2 gap-3"><label className="block text-sm">المحافظة<input required value={customer.governorate} onChange={event => setCustomer(old => ({ ...old, governorate: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" placeholder="المحافظة" /></label><label className="block text-sm">المدينة<input required value={customer.city} onChange={event => setCustomer(old => ({ ...old, city: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" placeholder="المدينة" /></label></div>
+                  <label className="mt-3 block text-sm">العنوان بالتفصيل
                     <textarea required value={customer.address} onChange={event => setCustomer(old => ({ ...old, address: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" rows={3} />
                   </label>
                   <label className="mt-3 block text-sm font-semibold">طريقة الدفع
@@ -202,8 +225,12 @@ export default function ProductDetailsPage() {
                       <option value="إنستا باي">إنستا باي</option>
                     </select>
                   </label>
-                  {paymentMethod === "إنستا باي" && <div className="rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-3 text-sm leading-7">حوّل المبلغ إلى حساب إنستا باي: <strong dir="ltr">{paymentSettings.instapayAccount || "بيانات الحساب ستظهر بعد إضافتها من المتجر"}</strong></div>}
-                  {paymentMethod === "محفظة إلكترونية" && <div className="rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-3 text-sm leading-7">حوّل المبلغ إلى رقم المحفظة: <strong dir="ltr">{paymentSettings.walletNumber || "بيانات المحفظة ستظهر بعد إضافتها من المتجر"}</strong></div>}
+                  {paymentMethod !== "نقدًا عند الاستلام" && <div className="space-y-3 rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-4 text-sm">
+                    <p className="font-semibold">بيانات استلام التحويل</p>
+                    <div className="flex items-center gap-2"><strong dir="ltr" className="min-w-0 flex-1 break-all text-base">{paymentMethod === "إنستا باي" ? paymentSettings.instapayAccount : paymentSettings.walletNumber}</strong><button type="button" onClick={() => void navigator.clipboard.writeText(paymentMethod === "إنستا باي" ? paymentSettings.instapayAccount : paymentSettings.walletNumber)} className="shrink-0 rounded-full border border-[#b99a60] px-4 py-2 font-semibold">نسخ</button></div>
+                    <label className="block">رقم الهاتف / الحساب اللي حوّلت منه<input required value={senderNumber} onChange={event => setSenderNumber(event.target.value)} className="mt-2 w-full rounded-xl border border-[#ded4c8] bg-white p-3" /></label>
+                    <label className="block">أضف صورة التحويل<input required type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setProofFile(event.target.files?.[0] || null)} className="mt-2 w-full rounded-xl border border-[#ded4c8] bg-white p-3" /><span className="mt-1 block text-xs text-[#71685E]">JPG أو PNG أو WebP، بحد أقصى 5 ميجابايت.</span></label>
+                  </div>}
                   <label className="mt-3 block text-sm">ملاحظات إضافية
                     <textarea value={customer.notes} onChange={event => setCustomer(old => ({ ...old, notes: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" rows={2} />
                   </label>
@@ -217,7 +244,10 @@ export default function ProductDetailsPage() {
                 <button disabled={saving || (Number(product.stock || 0) > 0 && quantity > Number(product.stock))} className="w-full rounded-full bg-[#1E1E1E] py-4 font-semibold text-white transition hover:bg-[#B8860B] disabled:opacity-50">
                   {saving ? "جارٍ تسجيل الطلب…" : "تأكيد الطلب"}
                 </button>
-              </form>
+                    </div>
+                  </div>
+                </form>}
+              </div>
             </section>
           </div>
         ))}
