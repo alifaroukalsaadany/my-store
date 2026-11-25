@@ -10,12 +10,20 @@ export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
   const [paymentMethod, setPaymentMethod] = useState("نقدًا عند الاستلام");
+  const [paymentSettings, setPaymentSettings] = useState({ instapayAccount: "", walletNumber: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<string[]>([]);
 
   useEffect(() => {
     try { setItems(JSON.parse(localStorage.getItem(CART_KEY) || "[]")); } catch { setItems([]); }
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/payment-settings", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : null)
+      .then(data => { if (data) setPaymentSettings({ instapayAccount: data.instapayAccount || "", walletNumber: data.walletNumber || "" }); })
+      .catch(() => {});
   }, []);
 
   function save(next: CartItem[]) {
@@ -111,6 +119,8 @@ export default function CartPage() {
                 <label className="block text-sm">رقم الهاتف / واتساب<input required type="tel" value={customer.phone} onChange={e => setCustomer(old => ({ ...old, phone: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
                 <label className="block text-sm">عنوان التوصيل<textarea required rows={3} value={customer.address} onChange={e => setCustomer(old => ({ ...old, address: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
                 <label className="block text-sm font-semibold">طريقة الدفع<select required value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-[#FAF8F5] p-3"><option value="نقدًا عند الاستلام">نقدًا عند الاستلام</option><option value="محفظة إلكترونية">محفظة إلكترونية</option><option value="إنستا باي">إنستا باي</option></select></label>
+                {paymentMethod === "إنستا باي" && <div className="rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-3 text-sm leading-7">حوّل المبلغ إلى حساب إنستا باي: <strong dir="ltr">{paymentSettings.instapayAccount || "بيانات الحساب ستظهر بعد إضافتها من المتجر"}</strong></div>}
+                {paymentMethod === "محفظة إلكترونية" && <div className="rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-3 text-sm leading-7">حوّل المبلغ إلى رقم المحفظة: <strong dir="ltr">{paymentSettings.walletNumber || "بيانات المحفظة ستظهر بعد إضافتها من المتجر"}</strong></div>
                 {error && <p role="alert" className="text-sm leading-6 text-red-700">{error}</p>}
                 <button disabled={busy} className="w-full rounded-full bg-[#1E1E1E] py-3 font-semibold text-white hover:bg-[#B8860B] disabled:opacity-50">{busy ? "جارٍ تأكيد الطلب…" : "تأكيد الطلبات"}</button>
               </form>
