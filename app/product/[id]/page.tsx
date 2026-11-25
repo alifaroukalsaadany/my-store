@@ -24,6 +24,7 @@ export default function ProductDetailsPage() {
   const [color, setColor] = useState("");
   const [size, setSize] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState("نقدًا عند الاستلام");
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", notes: "" });
   const [saving, setSaving] = useState(false);
   const [order, setOrder] = useState<OrderResult | null>(null);
@@ -95,7 +96,7 @@ export default function ProductDetailsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id, name: customer.name.trim(), phone: customer.phone.trim(), address: customer.address.trim(),
-          product: product.name, color, size, notes,
+          product: product.name, color, size, paymentMethod, notes,
         }),
       });
       if (!response.ok) throw new Error("تعذر تسجيل الطلب. حاولي مرة أخرى.");
@@ -185,6 +186,13 @@ export default function ProductDetailsPage() {
                   </label>
                   <label className="mt-3 block text-sm">عنوان التوصيل
                     <textarea required value={customer.address} onChange={event => setCustomer(old => ({ ...old, address: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" rows={3} />
+                  </label>
+                  <label className="mt-3 block text-sm font-semibold">طريقة الدفع
+                    <select required value={paymentMethod} onChange={event => setPaymentMethod(event.target.value)} className="mt-2 w-full rounded-xl border border-[#ded4c8] bg-[#FAF8F5] p-3">
+                      <option value="نقدًا عند الاستلام">نقدًا عند الاستلام</option>
+                      <option value="محفظة إلكترونية">محفظة إلكترونية</option>
+                      <option value="إنستا باي">إنستا باي</option>
+                    </select>
                   </label>
                   <label className="mt-3 block text-sm">ملاحظات إضافية
                     <textarea value={customer.notes} onChange={event => setCustomer(old => ({ ...old, notes: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" rows={2} />
