@@ -70,6 +70,7 @@ export default function Home() {
   const [newPiece, setNewPiece] = useState({ nameAr:"", nameEn:"", category:"shirts" });
   const [addOpen, setAddOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const touchStartX = useRef<number | null>(null);
   const t = copy[lang];
@@ -102,6 +103,16 @@ export default function Home() {
     return () => { active = false; };
   }, []);
 
+
+  useEffect(() => {
+    const refreshCart = () => {
+      try { const items = JSON.parse(localStorage.getItem("level-shopping-cart") || "[]"); setCartCount(Array.isArray(items) ? items.reduce((sum: number, item: { quantity?: number }) => sum + (Number(item.quantity) || 0), 0) : 0); } catch { setCartCount(0); }
+    };
+    refreshCart();
+    window.addEventListener("level-cart-updated", refreshCart);
+    window.addEventListener("storage", refreshCart);
+    return () => { window.removeEventListener("level-cart-updated", refreshCart); window.removeEventListener("storage", refreshCart); };
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -182,6 +193,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-8">
           <a href="#" className="text-2xl font-black tracking-[.16em]">LE<span className="text-[#B8860B]">V</span>EL</a>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <a href="/cart" className="rounded-full bg-[#1E1E1E] px-4 py-2 text-sm font-semibold text-white">عربة التسوق ({cartCount})</a>
             <button onClick={() => setLang(isAr ? "en" : "ar")} className="rounded-full border border-[#d8c7a9] px-4 py-2 text-sm font-semibold">{isAr ? "العربية | EN" : "EN | العربية"}</button>
 
           </div>
