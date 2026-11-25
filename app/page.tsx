@@ -106,7 +106,7 @@ export default function Home() {
         if (!response.ok) throw new Error("Products unavailable");
         const data = await response.json();
         const mapped: Product[] = (data.products || []).map((p: any) => ({
-          id: String(p.id), nameAr: p.name, nameEn: p.name, category: "all",
+          id: String(p.id), nameAr: p.name, nameEn: p.name, category: typeof p.category === "string" && p.category ? p.category : "غير مصنف",
           image: Array.isArray(p.image_urls) && p.image_urls[0] ? p.image_urls[0] : "",
           images: Array.isArray(p.image_urls) ? p.image_urls.filter((url: any) => typeof url === "string" && url.length > 0) : [],
           colors: Array.isArray(p.colors) ? p.colors : [],
