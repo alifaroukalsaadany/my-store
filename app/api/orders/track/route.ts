@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-function normalizePhone(value: string) { return value.replace(/\\D/g, "").replace(/^20/, "0"); }
+function normalizePhone(value: string) { return value.replace(/\D/g, "").replace(/^20/, "0"); }
 
 export async function POST(request: NextRequest) {
   if (!supabaseUrl || !serviceKey) return NextResponse.json({ error: "خدمة متابعة الطلب غير متاحة حاليًا." }, { status: 503 });
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!row || normalizePhone(String(row.phone)) !== normalizePhone(body.phone)) {
       return NextResponse.json({ error: "رقم الطلب أو رقم الموبايل غير صحيح." }, { status: 404 });
     }
-    const status = String(row.notes || "").match(/^حالة الطلب: ([^\\n]+)/m)?.[1] || "تم استلام طلبك";
+    const status = String(row.notes || "").match(/^حالة الطلب: ([^\n]+)/m)?.[1] || "تم استلام طلبك";
     return NextResponse.json({ order: { id: row.order_id, name: row.customer_name, product: row.product, createdAt: row.created_at, status } }, { headers: { "Cache-Control": "no-store" } });
   } catch { return NextResponse.json({ error: "حدث خطأ، حاول مرة أخرى." }, { status: 400 }); }
 }
