@@ -100,30 +100,6 @@ export default function Home() {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => {
-    if (!products.some(product => product.images.length > 1)) return;
-    const timer = window.setInterval(() => {
-      setImageIndexes(current => {
-        const next = { ...current };
-        for (const product of products) {
-          if (product.images.length > 1) {
-            const index = current[product.id] || 0;
-            next[product.id] = index < 0 ? product.images.length - 1 : index >= product.images.length ? 0 : index === product.images.length - 1 ? product.images.length : index + 1;
-          }
-        }
-        return next;
-      });
-    }, 5000);
-    return () => window.clearInterval(timer);
-  }, [products]);
-
-  useEffect(() => {
-    if (!selected || selected.images.length < 2) return;
-    const timer = window.setInterval(() => {
-      setSelectedImageIndex(index => index < 0 ? selected.images.length - 1 : index >= selected.images.length ? 0 : index === selected.images.length - 1 ? selected.images.length : index + 1);
-    }, 5000);
-    return () => window.clearInterval(timer);
-  }, [selected]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
