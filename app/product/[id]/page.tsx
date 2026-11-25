@@ -28,6 +28,7 @@ export default function ProductDetailsPage() {
   const [saving, setSaving] = useState(false);
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [cartMessage, setCartMessage] = useState("");
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -47,6 +48,22 @@ export default function ProductDetailsPage() {
     return () => { active = false; };
   }, [productId]);
 
+  useEffect(() => {
+    const refreshCart = () => {
+      try {
+        const items = JSON.parse(localStorage.getItem("level-shopping-cart") || "[]");
+        setCartCount(Array.isArray(items) ? items.reduce((sum: number, item: CartItem) => sum + (Number(item.quantity) || 0), 0) : 0);
+      } catch { setCartCount(0); }
+    };
+    refreshCart();
+    window.addEventListener("level-cart-updated", refreshCart);
+    window.addEventListener("storage", refreshCart);
+    return () => {
+      window.removeEventListener("level-cart-updated", refreshCart);
+      window.removeEventListener("storage", refreshCart);
+    };
+  }, []);
+
   const images = product?.image_urls?.filter(Boolean) || [];
   const price = Number(product?.price || 0);
   const total = useMemo(() => price > 0 ? price * quantity : 0, [price, quantity]);
@@ -61,7 +78,8 @@ export default function ProductDetailsPage() {
     else items.push({ id: String(product.id), name: product.name, image: images[0] || "", price, color, size, quantity });
     localStorage.setItem(key, JSON.stringify(items));
     window.dispatchEvent(new Event("level-cart-updated"));
-    setCartMessage("اتضاف المنتج لعربة التسوق بنجاح");
+    setCartMessage("اتضاف المنتج للعربة بنجاح");
+    window.setTimeout(() => setCartMessage(""), 2800);
   }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
@@ -94,7 +112,7 @@ export default function ProductDetailsPage() {
       <header className="border-b border-[#e8dfd2] bg-white/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
           <a href="/" className="text-2xl font-black tracking-[.16em]">LE<span className="text-[#B8860B]">V</span>EL</a>
-          <div className="flex gap-2"><a href="/cart" className="rounded-full bg-[#1E1E1E] px-4 py-2 text-sm text-white">عربة التسوق</a><a href="/" className="rounded-full border border-[#d8c7a9] px-4 py-2 text-sm">العودة للمنتجات</a></div>
+          <div className="flex items-center gap-2"><a href="/cart" aria-label={`عربة التسوق، عدد القطع ${cartCount}`} className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d8c7a9] bg-white text-[#1E1E1E]"><svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>{cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#B8860B] px-1 text-[11px] font-bold text-white">{cartCount}</span>}</a><a href="/" className="rounded-full border border-[#d8c7a9] px-4 py-2 text-sm">العودة للمنتجات</a></div>
         </div>
       </header>
 
@@ -155,7 +173,7 @@ export default function ProductDetailsPage() {
                 </div>
 
                 <button type="button" onClick={addToCart} className="w-full rounded-full border-2 border-[#1E1E1E] py-3 font-semibold transition hover:bg-[#F2ECE4]">أضف إلى عربة التسوق</button>
-                {cartMessage && <div role="status" className="rounded-xl bg-[#F2ECE4] p-3 text-center text-sm text-[#6b5424]">{cartMessage} · <a href="/cart" className="font-bold underline">عرض العربة</a></div>}
+                {cartMessage && <div role="status" aria-live="polite" className="fixed left-1/2 top-20 z-[70] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center gap-3 rounded-2xl border border-[#d9c9a8] bg-white px-4 py-3 text-sm text-[#1E1E1E] shadow-xl"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8f2e8] text-lg text-[#287a36]">✓</span><span className="flex-1 font-semibold">{cartMessage}</span><a href="/cart" className="shrink-0 font-bold text-[#9B741C] underline">عرض العربة</a></div>}
 
                 <div className="border-t border-[#eee6dc] pt-5">
                   <h2 className="text-lg font-bold">بيانات التوصيل</h2>
