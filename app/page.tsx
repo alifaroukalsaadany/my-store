@@ -64,6 +64,7 @@ export default function Home() {
   const [productsLoading, setProductsLoading] = useState(true);
   const [heroImage, setHeroImage] = useState("");
   const [heroCopyIndex, setHeroCopyIndex] = useState(0);
+  const [heroReady, setHeroReady] = useState(false);
   const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({});
   const [imageReset, setImageReset] = useState<Record<string, boolean>>({});
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -98,6 +99,10 @@ export default function Home() {
     } catch {}
     setHeroCopyIndex(nextCopy);
   }, []);
+
+  useEffect(() => {
+    if (!productsLoading && !heroImage) setHeroReady(true);
+  }, [productsLoading, heroImage]);
 
   useEffect(() => {
     let active = true;
@@ -242,10 +247,10 @@ export default function Home() {
       </header>
 
       <section className="relative isolate min-h-[calc(100svh-76px)] overflow-hidden bg-[#3b3027]">
-        {heroImage ? <img src={heroImage} alt="Level Women Wear collection" className="absolute inset-0 h-full w-full object-cover object-center" /> : <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_35%,#b9a58e_0%,#756452_42%,#302820_100%)]" />}
+        {heroImage ? <img src={heroImage} alt="Level Women Wear collection" onLoad={() => setHeroReady(true)} className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ease-in-out ${heroReady ? "opacity-100" : "opacity-0"}`} /> : <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_35%,#b9a58e_0%,#756452_42%,#302820_100%)]" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/10" />
         <div className="relative mx-auto flex min-h-[calc(100svh-76px)] max-w-7xl items-end px-5 pb-14 pt-20 md:items-center md:px-10 md:pb-20">
-          <div className="max-w-2xl text-white">
+          <div className={`max-w-2xl text-white transition-opacity duration-1000 ease-in-out ${heroReady ? "opacity-100" : "opacity-0"}`}>
             <p className="mb-5 inline-flex rounded-full border border-white/45 bg-white/10 px-4 py-2 text-xs font-semibold tracking-[.24em] backdrop-blur-sm">LEVEL WOMEN WEAR</p>
             <h1 className="max-w-2xl text-4xl font-semibold leading-[1.35] drop-shadow-md sm:text-5xl md:text-7xl">{isAr ? heroCopies[heroCopyIndex].arTitle : heroCopies[heroCopyIndex].enTitle}</h1>
             <p className="mt-4 max-w-lg text-base leading-8 text-white/90 drop-shadow sm:text-lg">{isAr ? heroCopies[heroCopyIndex].arTagline : heroCopies[heroCopyIndex].enTagline}</p>
