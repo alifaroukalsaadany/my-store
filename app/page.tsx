@@ -227,7 +227,7 @@ export default function Home() {
             <div className="p-5">
               <h3 className="text-lg font-semibold">{isAr ? product.nameAr : product.nameEn}</h3>
               <p className="mt-2 text-sm text-[#8A8176]">{product.price && product.price > 0 ? `${product.price.toLocaleString("ar-EG")} ج.م` : t.unknown}</p>
-              <button onClick={() => openOrder(product)} className="mt-5 w-full rounded-full bg-[#1E1E1E] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#B8860B]">{t.order}</button>
+              <a href={`/product/${encodeURIComponent(product.id)}`} className="mt-5 block w-full rounded-full bg-[#1E1E1E] px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#B8860B]">{isAr ? "عرض تفاصيل المنتج" : "View product details"}</a>
             </div>
           </article>)}
         </div>
