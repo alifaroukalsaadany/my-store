@@ -102,7 +102,7 @@ export default function Home() {
         }
         return next;
       });
-    }, 3000);
+    }, 5000);
     return () => window.clearInterval(timer);
   }, [products]);
 
@@ -223,13 +223,16 @@ export default function Home() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleProducts.map(product => <article key={product.id} className="group overflow-hidden rounded-2xl border border-[#e9e0d5] bg-white shadow-[0_8px_30px_rgba(54,42,25,.04)]">
             <div className="relative bg-[#F2ECE4]">
-              {product.images.length ? <div className="relative h-[330px] w-full">
-                {product.images.map((src, index) => <img key={src + index} src={src} alt={isAr ? product.nameAr : product.nameEn} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${index === (imageIndexes[product.id] || 0) ? "opacity-100" : "opacity-0"}`} />)}
-                {product.images.length > 1 && <>
-                  <button type="button" aria-label="Previous image" onClick={e => { e.stopPropagation(); setImageIndexes(old => ({ ...old, [product.id]: ((old[product.id] || 0) - 1 + product.images.length) % product.images.length })); }} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">‹</button>
-                  <button type="button" aria-label="Next image" onClick={e => { e.stopPropagation(); setImageIndexes(old => ({ ...old, [product.id]: ((old[product.id] || 0) + 1) % product.images.length })); }} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">›</button>
-                  <span className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{(imageIndexes[product.id] || 0) + 1} / {product.images.length}</span>
-                </>}
+              {product.images.length ? <div>
+                <div className="relative h-[290px] w-full overflow-hidden">
+                  <img src={product.images[imageIndexes[product.id] || 0]} alt={isAr ? product.nameAr : product.nameEn} className="h-full w-full object-cover transition-opacity duration-500" />
+                  {product.images.length > 1 && <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{(imageIndexes[product.id] || 0) + 1} / {product.images.length}</span>}
+                </div>
+                {product.images.length > 1 && <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 py-3" aria-label={isAr ? "صور المنتج" : "Product images"}>
+                  {product.images.map((src, index) => <button key={src + index} type="button" onClick={() => setImageIndexes(old => ({ ...old, [product.id]: index }))} aria-label={isAr ? `الصورة ${index + 1}` : `Image ${index + 1}`} className={`h-16 w-14 shrink-0 snap-start overflow-hidden rounded-lg border-2 transition ${index === (imageIndexes[product.id] || 0) ? "border-[#B8860B]" : "border-transparent"}`}>
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+                  </button>)}
+                </div>}
               </div> : <div className="flex h-[330px] items-center justify-center bg-[#E9DFD2] text-3xl font-black tracking-[.2em] text-[#9B8B78]">LEVEL</div>}
             </div>
             <div className="p-5">
