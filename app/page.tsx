@@ -221,6 +221,7 @@ export default function Home() {
     ["بناطيل", isAr ? "بناطيل" : "Trousers"],
     ["أطقم", isAr ? "أطقم" : "Sets"],
     ["تريكو وجواكت", isAr ? "تريكو وجواكت" : "Knitwear & Jackets"],
+    ["قمصان", isAr ? "قمصان" : "Shirts"],
     ["غير مصنف", isAr ? "غير مصنف" : "Uncategorized"]
   ];
 
