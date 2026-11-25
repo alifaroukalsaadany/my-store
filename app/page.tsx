@@ -215,7 +215,13 @@ export default function Home() {
   }
 
   const categoryOptions = [
-    ["all",t.all]
+    ["all",t.all],
+    ["فساتين", isAr ? "فساتين" : "Dresses"],
+    ["بلوزات", isAr ? "بلوزات" : "Blouses"],
+    ["بناطيل", isAr ? "بناطيل" : "Trousers"],
+    ["أطقم", isAr ? "أطقم" : "Sets"],
+    ["تريكو وجواكت", isAr ? "تريكو وجواكت" : "Knitwear & Jackets"],
+    ["غير مصنف", isAr ? "غير مصنف" : "Uncategorized"]
   ];
 
   return (
