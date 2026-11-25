@@ -188,6 +188,29 @@ export default function AdminPage() {
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(summary)}`, "_blank", "noopener,noreferrer");
   }
 
+  function sendCustomerConfirmation(order: Order) {
+    let phone = (order.phone || "").replace(/\\D/g, "");
+    if (phone.startsWith("0")) phone = "2" + phone;
+    else if (phone.startsWith("1")) phone = "20" + phone;
+    if (phone.length < 10 || phone.length > 15) {
+      window.alert("رقم هاتف العميل غير صالح أو غير مكتمل.");
+      return;
+    }
+    const message = `أهلًا ${order.name} ❤️
+تم استلام طلبك من LEVEL Women Wear بنجاح.
+رقم الطلب: ${order.id}
+المنتج: ${order.product}
+اللون: ${order.color || "—"}
+المقاس: ${order.size || "—"}
+المحافظة: ${order.governorate || "—"}
+المدينة: ${order.city || "—"}
+العنوان: ${order.address || "—"}
+طريقة الدفع المختارة: ${order.paymentMethod || "غير محددة"}
+إجمالي الطلب: ${Number(order.totalAmount || 0).toLocaleString("ar-EG")} جنيه
+هنراجع طلبك ونتواصل معاك لتأكيد التفاصيل. شكرًا لثقتك في LEVEL ❤️${order.proofImageUrl ? `\nصورة إثبات التحويل: ${order.proofImageUrl}` : ""}`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  }
+
   return (
     <main dir="rtl" className="min-h-screen bg-[#FAF8F5] text-[#1E1E1E]">
       <header className="border-b border-[#e8dfd2] bg-white/80">
@@ -288,7 +311,7 @@ export default function AdminPage() {
                   <article key={order.id} className="rounded-2xl border border-[#e9e0d5] bg-white p-5 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-lg font-bold">{order.name}</h3><span dir="ltr" className="text-sm text-[#9B741C]">{order.id}</span></div>
                     <p className="mt-3 text-sm leading-8">{order.product} · {order.color} · {order.size}<br />الهاتف: <span dir="ltr">{order.phone}</span><br />المحافظة: {order.governorate || "—"} · المدينة: {order.city || "—"}<br />العنوان: {order.address}<br />طريقة الدفع: <strong>{order.paymentMethod || "غير محددة"}</strong><br />الإجمالي: <strong>{Number(order.totalAmount || 0).toLocaleString("ar-EG")} ج.م</strong><br />رقم التحويل منه: <span dir="ltr">{order.senderNumber || "—"}</span><br />ملاحظات: {order.notes || "لا توجد"}</p>{order.proofImageUrl && <a href={order.proofImageUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-full border border-[#B8860B] px-4 py-2 text-sm font-semibold text-[#8A671C]">عرض صورة التحويل</a>}
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3"><span className="text-xs text-[#8b8176]">{order.createdAt ? new Date(order.createdAt).toLocaleString("ar-EG") : ""}</span><button onClick={() => sendWhatsApp(order)} className="rounded-full bg-[#1E1E1E] px-5 py-2 text-sm text-white">إرسال التفاصيل عبر واتساب</button></div>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3"><span className="text-xs text-[#8b8176]">{order.createdAt ? new Date(order.createdAt).toLocaleString("ar-EG") : ""}</span><div className="flex flex-wrap gap-2"><button onClick={() => sendCustomerConfirmation(order)} className="rounded-full bg-[#176B3A] px-5 py-2 text-sm text-white">إرسال تأكيد الطلب للعميل</button><button onClick={() => sendWhatsApp(order)} className="rounded-full border border-[#1E1E1E] px-5 py-2 text-sm text-[#1E1E1E]">إرسال التفاصيل لواتساب الإدارة</button></div></div>
                   </article>
                 ))}
               </section>
