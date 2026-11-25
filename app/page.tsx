@@ -236,6 +236,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-8">
           <a href="#" className="text-2xl font-black tracking-[.16em]">LE<span className="text-[#B8860B]">V</span>EL</a>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <a href="/track-order" className="rounded-full border border-[#d8c7a9] bg-white px-3 py-2 text-xs font-semibold">تابع طلبك</a>
             <a href="/cart" aria-label={`عربة التسوق، عدد القطع ${cartCount}`} className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d8c7a9] bg-white text-[#1E1E1E] transition hover:bg-[#F2ECE4]">
               <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
               {cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#B8860B] px-1 text-[11px] font-bold text-white">{cartCount}</span>}
