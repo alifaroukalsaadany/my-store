@@ -65,7 +65,7 @@ export default function AdminPage() {
   async function loadAll() {
     setLoading(true); setError("");
     try {
-      const [o, p, settings] = await Promise.all([api("/api/orders"), api("/api/products?admin=1"), api("/api/payment-settings")]);
+      const [o, p, settings] = await Promise.all([api("/api/orders"), api("/api/products?admin=1"), api("/api/payment-settings").catch(() => ({ instapayAccount: "", walletNumber: "" }))]);
       setOrders(o.orders || []);
       knownOrderIds.current = new Set((o.orders || []).map((order: Order) => order.id));
       setPaymentSettings({ instapayAccount: settings.instapayAccount || "", walletNumber: settings.walletNumber || "" });
