@@ -38,9 +38,11 @@ const copy = {
   }
 };
 
-function slideOffset(index: number, current: number, total: number) {
-  const offset = (index - current + total) % total;
-  return offset > total / 2 ? offset - total : offset;
+function loopImages(images: string[]) {
+  return images.length > 1 ? [images[images.length - 1], ...images, images[0]] : images;
+}
+function slidePosition(index: number) {
+  return `translateX(${-index * 100}%)`;
 }
 
 function makeId() {
@@ -104,7 +106,10 @@ export default function Home() {
       setImageIndexes(current => {
         const next = { ...current };
         for (const product of products) {
-          if (product.images.length > 1) next[product.id] = ((current[product.id] || 0) + 1) % product.images.length;
+          if (product.images.length > 1) {
+            const index = current[product.id] || 0;
+            next[product.id] = index < 0 ? product.images.length - 1 : index >= product.images.length ? 0 : index === product.images.length - 1 ? product.images.length : index + 1;
+          }
         }
         return next;
       });
@@ -115,7 +120,7 @@ export default function Home() {
   useEffect(() => {
     if (!selected || selected.images.length < 2) return;
     const timer = window.setInterval(() => {
-      setSelectedImageIndex(index => (index + 1) % selected.images.length);
+      setSelectedImageIndex(index => index < 0 ? selected.images.length - 1 : index >= selected.images.length ? 0 : index === selected.images.length - 1 ? selected.images.length : index + 1);
     }, 5000);
     return () => window.clearInterval(timer);
   }, [selected]);
@@ -230,9 +235,9 @@ export default function Home() {
           {visibleProducts.map(product => <article key={product.id} className="group overflow-hidden rounded-2xl border border-[#e9e0d5] bg-white shadow-[0_8px_30px_rgba(54,42,25,.04)]">
             <div className="relative bg-[#F2ECE4]">
               {product.images.length ? <div>
-                <div className="relative h-[290px] w-full overflow-hidden touch-pan-y select-none" onTouchStart={event => { touchStartX.current = event.touches[0]?.clientX ?? null; }} onTouchEnd={event => { const start = touchStartX.current; const end = event.changedTouches[0]?.clientX; touchStartX.current = null; if (start === null || end === undefined || Math.abs(end - start) < 40 || product.images.length < 2) return; setImageIndexes(old => ({ ...old, [product.id]: ((old[product.id] || 0) + (end < start ? 1 : -1) + product.images.length) % product.images.length })); }}>
-                  {product.images.map((src, index) => <img key={src + index} src={src} alt={isAr ? product.nameAr : product.nameEn} style={{ transform: `translateX(${slideOffset(index, imageIndexes[product.id] || 0, product.images.length) * 100}%)` }} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-in-out" />)}
-                  {product.images.length > 1 && <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{(imageIndexes[product.id] || 0) + 1} / {product.images.length}</span>}
+                <div className="relative h-[290px] w-full overflow-hidden touch-pan-y select-none" onTouchStart={event => { touchStartX.current = event.touches[0]?.clientX ?? null; }} onTouchEnd={event => { const start = touchStartX.current; const end = event.changedTouches[0]?.clientX; touchStartX.current = null; if (start === null || end === undefined || Math.abs(end - start) < 40 || product.images.length < 2) return; setImageIndexes(old => { const current = old[product.id] || 0; const logical = current < 0 ? product.images.length - 1 : current >= product.images.length ? 0 : current; return { ...old, [product.id]: end < start ? (logical === product.images.length - 1 ? product.images.length : logical + 1) : (logical === 0 ? -1 : logical - 1) }; }); }}>
+                  {loopImages(product.images).map((src, index) => <img key={src + index} src={src} alt={isAr ? product.nameAr : product.nameEn} onTransitionEnd={() => { const current = imageIndexes[product.id] || 0; if (current === product.images.length || current === -1) setImageIndexes(old => ({ ...old, [product.id]: current === -1 ? product.images.length - 1 : 0 })); }} style={{ transform: slidePosition((imageIndexes[product.id] || 0) + 1) }} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-in-out" />)}
+                  {product.images.length > 1 && <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{((imageIndexes[product.id] || 0) + product.images.length) % product.images.length + 1} / {product.images.length}</span>}
                 </div>
                 {product.images.length > 1 && <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 py-3" aria-label={isAr ? "صور المنتج" : "Product images"}>
                   {product.images.map((src, index) => <button key={src + index} type="button" onClick={() => setImageIndexes(old => ({ ...old, [product.id]: index }))} aria-label={isAr ? `الصورة ${index + 1}` : `Image ${index + 1}`} className={`h-16 w-14 shrink-0 snap-start overflow-hidden rounded-lg border-2 transition ${index === (imageIndexes[product.id] || 0) ? "border-[#B8860B]" : "border-transparent"}`}>
@@ -270,11 +275,11 @@ export default function Home() {
           <div className="flex items-center justify-between"><h2 className="text-2xl font-semibold">{done ? t.success : t.formTitle}</h2><button onClick={() => {setSelected(null);setDone(null);}} className="rounded-full p-2 text-xl">×</button></div>
           {!done && selected.images.length > 0 && <div className="relative mt-5 overflow-hidden rounded-2xl bg-[#F2ECE4]">
             <div className="relative h-[280px] w-full">
-              {selected.images.map((src, index) => <img key={src + index} src={src} alt={selected.nameAr} style={{ transform: `translateX(${slideOffset(index, selectedImageIndex, selected.images.length) * 100}%)` }} className="absolute inset-0 h-full w-full object-contain transition-transform duration-500 ease-in-out" />)}
+              {loopImages(selected.images).map((src, index) => <img key={src + index} src={src} alt={selected.nameAr} onTransitionEnd={() => { if (selectedImageIndex === selected.images.length || selectedImageIndex === -1) setSelectedImageIndex(selectedImageIndex === -1 ? selected.images.length - 1 : 0); }} style={{ transform: slidePosition(selectedImageIndex + 1) }} className="absolute inset-0 h-full w-full object-contain transition-transform duration-500 ease-in-out" />)}
               {selected.images.length > 1 && <>
-                <button type="button" aria-label="Previous image" onClick={() => setSelectedImageIndex(index => (index - 1 + selected.images.length) % selected.images.length)} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">‹</button>
-                <button type="button" aria-label="Next image" onClick={() => setSelectedImageIndex(index => (index + 1) % selected.images.length)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">›</button>
-                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{selectedImageIndex + 1} / {selected.images.length}</span>
+                <button type="button" aria-label="Previous image" onClick={() => setSelectedImageIndex(index => index < 0 ? selected.images.length - 1 : index >= selected.images.length ? 0 : index === 0 ? -1 : index - 1)} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">‹</button>
+                <button type="button" aria-label="Next image" onClick={() => setSelectedImageIndex(index => index < 0 ? selected.images.length - 1 : index >= selected.images.length ? 0 : index === selected.images.length - 1 ? selected.images.length : index + 1)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/45 px-3 py-2 text-xl text-white">›</button>
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{((selectedImageIndex + selected.images.length) % selected.images.length) + 1} / {selected.images.length}</span>
               </>}
             </div>
           </div>}
