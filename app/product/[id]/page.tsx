@@ -244,7 +244,6 @@ export default function ProductDetailsPage() {
                 <button disabled={saving || (Number(product.stock || 0) > 0 && quantity > Number(product.stock))} className="w-full rounded-full bg-[#1E1E1E] py-4 font-semibold text-white transition hover:bg-[#B8860B] disabled:opacity-50">
                   {saving ? "جارٍ تسجيل الطلب…" : "تأكيد الطلب"}
                 </button>
-                    </div>
                   </div>
                 </form>}
               </div>
