@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 
 type Order = {
   id: string; createdAt: string; name: string; phone: string; address: string;
   product: string; color: string; size: string; paymentMethod: string; notes: string;
 };
+type PaymentSettings = { instapayAccount: string; walletNumber: string };
 type Product = {
   id: string; name: string; description: string; price: number | null;
   image_urls: string[]; sizes: string[]; colors: string[]; stock: number; is_active: boolean; category: string;
@@ -18,11 +19,15 @@ const blank = { name: "", description: "", price: "", image: "", sizes: "S, M, L
 export default function AdminPage() {
   const [key, setKey] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
+  const [newOrderNotice, setNewOrderNotice] = useState<Order | null>(null);
+  const knownOrderIds = useRef<Set<string>>(new Set());
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({ instapayAccount: "", walletNumber: "" });
+  const [savingPaymentSettings, setSavingPaymentSettings] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const [tab, setTab] = useState<"products" | "orders">("products");
+  const [tab, setTab] = useState<"products" | "orders" | "payments">("products");
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -60,13 +65,46 @@ export default function AdminPage() {
   async function loadAll() {
     setLoading(true); setError("");
     try {
-      const [o, p] = await Promise.all([api("/api/orders"), api("/api/products?admin=1")]);
+      const [o, p, settings] = await Promise.all([api("/api/orders"), api("/api/products?admin=1"), api("/api/payment-settings")]);
       setOrders(o.orders || []);
+      knownOrderIds.current = new Set((o.orders || []).map((order: Order) => order.id));
+      setPaymentSettings({ instapayAccount: settings.instapayAccount || "", walletNumber: settings.walletNumber || "" });
       setProducts(p.products || []);
       setAuthenticated(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذر تحميل البيانات.");
     } finally { setLoading(false); }
+  }
+
+  useEffect(() => {
+    if (!authenticated) return;
+    const timer = window.setInterval(async () => {
+      try {
+        const response = await fetch("/api/orders", { headers: { "x-owner-key": key }, cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        const latest: Order[] = data.orders || [];
+        const fresh = latest.filter(order => !knownOrderIds.current.has(order.id));
+        if (fresh.length) {
+          fresh.forEach(order => knownOrderIds.current.add(order.id));
+          setOrders(latest);
+          setNewOrderNotice(fresh[0]);
+        }
+      } catch { /* Background refresh is best-effort. */ }
+    }, 20000);
+    return () => window.clearInterval(timer);
+  }, [authenticated, key]);
+
+  async function savePaymentSettings(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSavingPaymentSettings(true);
+    setError("");
+    try {
+      await api("/api/payment-settings", { method: "PUT", body: JSON.stringify(paymentSettings) });
+      window.alert("تم حفظ بيانات الدفع بنجاح.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "تعذر حفظ بيانات الدفع.");
+    } finally { setSavingPaymentSettings(false); }
   }
 
   async function saveProduct(e: React.FormEvent<HTMLFormElement>) {
@@ -174,10 +212,28 @@ export default function AdminPage() {
             <div className="mt-8 flex flex-wrap gap-2">
               <button onClick={() => setTab("products")} className={`rounded-full px-6 py-3 ${tab === "products" ? "bg-[#1E1E1E] text-white" : "border bg-white"}`}>المنتجات ({products.length})</button>
               <button onClick={() => setTab("orders")} className={`rounded-full px-6 py-3 ${tab === "orders" ? "bg-[#1E1E1E] text-white" : "border bg-white"}`}>الطلبات ({orders.length})</button>
+              <button onClick={() => setTab("payments")} className={`rounded-full px-6 py-3 ${tab === "payments" ? "bg-[#1E1E1E] text-white" : "border bg-white"}`}>إعدادات الدفع</button>
               <button onClick={() => void loadAll()} className="mr-auto rounded-full border border-[#B8860B] bg-white px-5 py-3">تحديث البيانات</button>
             </div>
             {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-            {tab === "products" ? (
+            {newOrderNotice && <div role="status" aria-live="polite" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#d9c9a8] bg-[#fffaf0] p-4">
+              <div><strong>طلب جديد وصل!</strong><p className="mt-1 text-sm">الطلب رقم {newOrderNotice.id} باسم {newOrderNotice.name} · طريقة الدفع المختارة: {newOrderNotice.paymentMethod || "غير محددة"}</p></div>
+              <button onClick={() => { setTab("orders"); setNewOrderNotice(null); }} className="rounded-full bg-[#1E1E1E] px-4 py-2 text-sm text-white">عرض الطلب</button>
+              <button aria-label="إغلاق التنبيه" onClick={() => setNewOrderNotice(null)} className="px-2 text-xl">×</button>
+            </div>
+            {tab === "payments" ? (
+              <form onSubmit={savePaymentSettings} className="mt-6 max-w-2xl space-y-4 rounded-2xl border border-[#e9e0d5] bg-white p-6">
+                <h2 className="text-xl font-bold">بيانات استقبال المدفوعات</h2>
+                <p className="text-sm leading-7 text-[#71685E]">اكتب البيانات التي تريد عرضها للعملاء عند اختيار وسيلة الدفع الإلكترونية. اترك الخانة فارغة إذا لم تكن جاهزًا لتفعيلها.</p>
+                <label className="block text-sm font-semibold">حساب إنستا باي
+                  <input value={paymentSettings.instapayAccount} onChange={e => setPaymentSettings(old => ({ ...old, instapayAccount: e.target.value }))} placeholder="مثال: name@instapay" className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" />
+                </label>
+                <label className="block text-sm font-semibold">رقم المحفظة الإلكترونية
+                  <input type="tel" value={paymentSettings.walletNumber} onChange={e => setPaymentSettings(old => ({ ...old, walletNumber: e.target.value }))} placeholder="رقم الهاتف المرتبط بالمحفظة" className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" />
+                </label>
+                <button disabled={savingPaymentSettings} className="w-full rounded-full bg-[#1E1E1E] py-3 font-semibold text-white disabled:opacity-50">{savingPaymentSettings ? "جارٍ الحفظ…" : "حفظ بيانات الدفع"}</button>
+              </form>
+            ) : tab === "products" ? (
               <div className="mt-6 grid gap-6 lg:grid-cols-[.85fr_1.15fr]">
                 <form onSubmit={saveProduct} className="h-fit space-y-3 rounded-2xl border border-[#e9e0d5] bg-white p-5">
                   <h2 className="text-xl font-bold">{editingId ? "تعديل المنتج" : "إضافة منتج جديد"}</h2>
