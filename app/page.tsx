@@ -90,11 +90,11 @@ export default function Home() {
   useEffect(() => {
     let nextCopy = Math.floor(Math.random() * heroCopies.length);
     try {
-      const previousCopy = Number(sessionStorage.getItem("level-hero-copy-index"));
+      const previousCopy = Number(localStorage.getItem("level-hero-copy-index"));
       if (heroCopies.length > 1 && Number.isInteger(previousCopy) && previousCopy >= 0 && previousCopy < heroCopies.length && nextCopy === previousCopy) {
         nextCopy = (nextCopy + 1 + Math.floor(Math.random() * (heroCopies.length - 1))) % heroCopies.length;
       }
-      sessionStorage.setItem("level-hero-copy-index", String(nextCopy));
+      localStorage.setItem("level-hero-copy-index", String(nextCopy));
     } catch {}
     setHeroCopyIndex(nextCopy);
   }, []);
@@ -119,13 +119,13 @@ export default function Home() {
           if (heroImages.length) {
             let candidates = heroImages;
             try {
-              const previousImage = sessionStorage.getItem("level-hero-image");
+              const previousImage = localStorage.getItem("level-hero-image");
               const withoutPrevious = heroImages.filter(image => image !== previousImage);
               if (withoutPrevious.length) candidates = withoutPrevious;
             } catch {}
             const nextImage = candidates[Math.floor(Math.random() * candidates.length)];
             setHeroImage(nextImage);
-            try { sessionStorage.setItem("level-hero-image", nextImage); } catch {}
+            try { localStorage.setItem("level-hero-image", nextImage); } catch {}
           }
         }
       })
