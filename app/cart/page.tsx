@@ -8,7 +8,9 @@ function orderId() { return "LV" + Math.random().toString(36).slice(2, 8).toUppe
 
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
+  const [customer, setCustomer] = useState({ name: "", phone: "", governorate: "", city: "", address: "" });
+  const [senderNumber, setSenderNumber] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("نقدًا عند الاستلام");
   const [paymentSettings, setPaymentSettings] = useState({ instapayAccount: "", walletNumber: "" });
   const [busy, setBusy] = useState(false);
@@ -38,17 +40,27 @@ export default function CartPage() {
 
   async function checkout(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!items.length || !customer.name.trim() || !customer.phone.trim() || !customer.address.trim()) return;
+    if (!items.length || !customer.name.trim() || !customer.phone.trim() || !customer.governorate.trim() || !customer.city.trim() || !customer.address.trim()) return;
+    if (paymentMethod !== "نقدًا عند الاستلام" && (!senderNumber.trim() || !proofFile)) { setError("اكتب رقم التحويل وارفع صورة التحويل قبل تأكيد الطلب."); return; }
     setBusy(true); setError(""); setSuccess([]);
     const completed: string[] = [];
     try {
+      let proofImageUrl = "";
+      if (proofFile && paymentMethod !== "نقدًا عند الاستلام") {
+        const uploadForm = new FormData(); uploadForm.append("file", proofFile);
+        const uploadResponse = await fetch("/api/payment-proof-upload", { method: "POST", body: uploadForm });
+        const uploadData = await uploadResponse.json();
+        if (!uploadResponse.ok) throw new Error(uploadData.error || "تعذر رفع صورة التحويل.");
+        proofImageUrl = uploadData.url;
+      }
       for (const item of items) {
         const id = orderId();
         const response = await fetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id, name: customer.name.trim(), phone: customer.phone.trim(), address: customer.address.trim(),
+            id, name: customer.name.trim(), phone: customer.phone.trim(), governorate: customer.governorate, city: customer.city,
+            senderNumber, proofImageUrl, totalAmount: item.price > 0 ? item.price * item.quantity : 0, address: customer.address.trim(),
             product: item.name, color: item.color, size: item.size, paymentMethod,
             notes: `الكمية: ${item.quantity}${item.price > 0 ? ` · سعر القطعة: ${item.price} ج.م · إجمالي الصنف: ${item.price * item.quantity} ج.م` : " · السعر غير مُعرّف حاليًا"}`,
           }),
@@ -117,10 +129,10 @@ export default function CartPage() {
                 <h3 className="font-bold">بيانات التوصيل</h3>
                 <label className="block text-sm">الاسم<input required value={customer.name} onChange={e => setCustomer(old => ({ ...old, name: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
                 <label className="block text-sm">رقم الهاتف / واتساب<input required type="tel" value={customer.phone} onChange={e => setCustomer(old => ({ ...old, phone: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
-                <label className="block text-sm">عنوان التوصيل<textarea required rows={3} value={customer.address} onChange={e => setCustomer(old => ({ ...old, address: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
+                <div className="grid grid-cols-2 gap-3"><label className="block text-sm">المحافظة<input required value={customer.governorate} onChange={e => setCustomer(old => ({ ...old, governorate: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label><label className="block text-sm">المدينة<input required value={customer.city} onChange={e => setCustomer(old => ({ ...old, city: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label></div>
+                <label className="block text-sm">العنوان بالتفصيل<textarea required rows={3} value={customer.address} onChange={e => setCustomer(old => ({ ...old, address: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
                 <label className="block text-sm font-semibold">طريقة الدفع<select required value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-[#FAF8F5] p-3"><option value="نقدًا عند الاستلام">نقدًا عند الاستلام</option><option value="محفظة إلكترونية">محفظة إلكترونية</option><option value="إنستا باي">إنستا باي</option></select></label>
-                {paymentMethod === "إنستا باي" && <div className="rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-3 text-sm leading-7">حوّل المبلغ إلى حساب إنستا باي: <strong dir="ltr">{paymentSettings.instapayAccount || "بيانات الحساب ستظهر بعد إضافتها من المتجر"}</strong></div>}
-                {paymentMethod === "محفظة إلكترونية" && <div className="rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-3 text-sm leading-7">حوّل المبلغ إلى رقم المحفظة: <strong dir="ltr">{paymentSettings.walletNumber || "بيانات المحفظة ستظهر بعد إضافتها من المتجر"}</strong></div>}
+                {paymentMethod !== "نقدًا عند الاستلام" && <div className="space-y-3 rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-4 text-sm"><p className="font-semibold">بيانات استلام التحويل</p><div className="flex items-center gap-2"><strong dir="ltr" className="min-w-0 flex-1 break-all text-base">{paymentMethod === "إنستا باي" ? paymentSettings.instapayAccount : paymentSettings.walletNumber}</strong><button type="button" onClick={() => void navigator.clipboard.writeText(paymentMethod === "إنستا باي" ? paymentSettings.instapayAccount : paymentSettings.walletNumber)} className="shrink-0 rounded-full border border-[#b99a60] px-4 py-2 font-semibold">نسخ</button></div><label className="block">رقم الهاتف / الحساب اللي حوّلت منه<input required value={senderNumber} onChange={e => setSenderNumber(e.target.value)} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label><label className="block">أضف صورة التحويل<input required type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setProofFile(e.target.files?.[0] || null)} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /><span className="mt-1 block text-xs text-[#71685E]">JPG أو PNG أو WebP، بحد أقصى 5 ميجابايت.</span></label></div>}
                 {error && <p role="alert" className="text-sm leading-6 text-red-700">{error}</p>}
                 <button disabled={busy} className="w-full rounded-full bg-[#1E1E1E] py-3 font-semibold text-white hover:bg-[#B8860B] disabled:opacity-50">{busy ? "جارٍ تأكيد الطلب…" : "تأكيد الطلبات"}</button>
               </form>
