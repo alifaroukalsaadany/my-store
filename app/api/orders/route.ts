@@ -76,7 +76,12 @@ export async function GET(request: NextRequest) {
       id: row.order_id, createdAt: row.created_at, name: row.customer_name, phone: row.phone,
       address: row.delivery_address, product: row.product, color: row.color, size: row.size,
       paymentMethod: (row.notes || "").match(/^طريقة الدفع: ([^\n]+)/)?.[1] || "غير محددة",
-      notes: (row.notes || "").replace(/^طريقة الدفع: [^\n]+\n?/, ""),
+      totalAmount: Number((row.notes || "").match(/^الإجمالي: ([0-9.]+)/m)?.[1] || 0),
+      governorate: (row.notes || "").match(/^المحافظة: ([^\n]+)/m)?.[1] || "",
+      city: (row.notes || "").match(/^المدينة: ([^\n]+)/m)?.[1] || "",
+      senderNumber: (row.notes || "").match(/^رقم التحويل منه: ([^\n]+)/m)?.[1] || "",
+      proofImageUrl: (row.notes || "").match(/^صورة التحويل: (https:\/\/[^\n]+)/m)?.[1] || "",
+      notes: (row.notes || "").split("\n").filter((line: string) => !/^(طريقة الدفع:|الإجمالي:|المحافظة:|المدينة:|رقم التحويل منه:|صورة التحويل:)/.test(line)).join("\n"),
     })),
   }, { headers: { "Cache-Control": "no-store" } });
 }
