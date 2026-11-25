@@ -226,7 +226,7 @@ export default function Home() {
             <div className="relative bg-[#F2ECE4]">
               {product.images.length ? <div>
                 <div className="relative h-[290px] w-full overflow-hidden touch-pan-y select-none" onTouchStart={event => { touchStartX.current = event.touches[0]?.clientX ?? null; }} onTouchEnd={event => { const start = touchStartX.current; const end = event.changedTouches[0]?.clientX; touchStartX.current = null; if (start === null || end === undefined || Math.abs(end - start) < 40 || product.images.length < 2) return; setImageIndexes(old => ({ ...old, [product.id]: ((old[product.id] || 0) + (end < start ? 1 : -1) + product.images.length) % product.images.length })); }}>
-                  <img src={product.images[imageIndexes[product.id] || 0]} alt={isAr ? product.nameAr : product.nameEn} className="h-full w-full object-cover transition-opacity duration-500" />
+                  {product.images.map((src, index) => <img key={src + index} src={src} alt={isAr ? product.nameAr : product.nameEn} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out ${index === (imageIndexes[product.id] || 0) ? "opacity-100" : "opacity-0"}`} />)}
                   {product.images.length > 1 && <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">{(imageIndexes[product.id] || 0) + 1} / {product.images.length}</span>}
                 </div>
                 {product.images.length > 1 && <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 py-3" aria-label={isAr ? "صور المنتج" : "Product images"}>
