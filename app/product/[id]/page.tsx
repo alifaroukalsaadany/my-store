@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { EGYPT_LOCATIONS } from "../../lib/egypt-locations";
 
 type Product = {
   id: string; name: string; description?: string; price?: number;
@@ -214,7 +215,7 @@ export default function ProductDetailsPage() {
                   <label className="mt-3 block text-sm">رقم الهاتف / واتساب
                     <input required type="tel" value={customer.phone} onChange={event => setCustomer(old => ({ ...old, phone: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" />
                   </label>
-                  <div className="mt-3 grid grid-cols-2 gap-3"><label className="block text-sm">المحافظة<input required value={customer.governorate} onChange={event => setCustomer(old => ({ ...old, governorate: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" placeholder="المحافظة" /></label><label className="block text-sm">المدينة<input required value={customer.city} onChange={event => setCustomer(old => ({ ...old, city: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" placeholder="المدينة" /></label></div>
+                  <div className="mt-3 grid grid-cols-2 gap-3"><label className="block text-sm">المحافظة<select required value={customer.governorate} onChange={event => setCustomer(old => ({ ...old, governorate: event.target.value, city: "" }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] bg-white p-3"><option value="">اختاري المحافظة</option>{Object.keys(EGYPT_LOCATIONS).map(governorate => <option key={governorate} value={governorate}>{governorate}</option>)}</select></label><label className="block text-sm">المدينة<select required value={customer.city} onChange={event => setCustomer(old => ({ ...old, city: event.target.value }))} disabled={!customer.governorate} className="mt-2 w-full rounded-xl border border-[#ded4c8] bg-white p-3 disabled:opacity-50"><option value="">اختاري المدينة</option>{(EGYPT_LOCATIONS[customer.governorate] || []).map(city => <option key={city} value={city}>{city}</option>)}</select></label></div>
                   <label className="mt-3 block text-sm">العنوان بالتفصيل
                     <textarea required value={customer.address} onChange={event => setCustomer(old => ({ ...old, address: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" rows={3} />
                   </label>
