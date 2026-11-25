@@ -220,7 +220,7 @@ export default function AdminPage() {
               <div><strong>طلب جديد وصل!</strong><p className="mt-1 text-sm">الطلب رقم {newOrderNotice.id} باسم {newOrderNotice.name} · طريقة الدفع المختارة: {newOrderNotice.paymentMethod || "غير محددة"}</p></div>
               <button onClick={() => { setTab("orders"); setNewOrderNotice(null); }} className="rounded-full bg-[#1E1E1E] px-4 py-2 text-sm text-white">عرض الطلب</button>
               <button aria-label="إغلاق التنبيه" onClick={() => setNewOrderNotice(null)} className="px-2 text-xl">×</button>
-            </div>
+            </div>}
             {tab === "payments" ? (
               <form onSubmit={savePaymentSettings} className="mt-6 max-w-2xl space-y-4 rounded-2xl border border-[#e9e0d5] bg-white p-6">
                 <h2 className="text-xl font-bold">بيانات استقبال المدفوعات</h2>
