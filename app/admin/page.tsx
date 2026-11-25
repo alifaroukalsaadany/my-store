@@ -42,7 +42,7 @@ export default function AdminPage() {
         });
         return next;
       });
-    }, 3000);
+    }, 5000);
     return () => window.clearInterval(timer);
   }, [products]);
 
@@ -205,15 +205,15 @@ export default function AdminPage() {
                   {products.length === 0 && <p className="rounded-2xl border border-dashed bg-white p-8 text-center text-[#71685E]">لا توجد منتجات مسجلة في قاعدة البيانات.</p>}
                   {products.map(p => <article key={p.id} className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4">
                     {p.image_urls?.length ? (
-                      <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-[#F2ECE4]">
-                        <img src={p.image_urls[imageIndexes[p.id] ?? 0]} alt={p.name} className="h-full w-full object-cover" />
-                        {p.image_urls.length > 1 && (
-                          <>
-                            <button type="button" aria-label="الصورة السابقة" onClick={() => setImageIndexes(old => ({ ...old, [p.id]: ((old[p.id] ?? 0) - 1 + p.image_urls.length) % p.image_urls.length }))} className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-1 text-xs text-white">‹</button>
-                            <button type="button" aria-label="الصورة التالية" onClick={() => setImageIndexes(old => ({ ...old, [p.id]: ((old[p.id] ?? 0) + 1) % p.image_urls.length }))} className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-1 text-xs text-white">›</button>
-                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-1.5 text-[10px] text-white" dir="ltr">{(imageIndexes[p.id] ?? 0) + 1}/{p.image_urls.length}</span>
-                          </>
-                        )}
+                      <div className="w-full min-w-0 max-w-[280px] shrink-0">
+                        <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain rounded-xl bg-[#F2ECE4] p-2" aria-label={`صور المنتج ${p.name}`}>
+                          {p.image_urls.map((src, index) => (
+                            <button key={`${p.id}-image-${index}`} type="button" onClick={() => setImageIndexes(old => ({ ...old, [p.id]: index }))} aria-label={`عرض الصورة ${index + 1}`} aria-pressed={(imageIndexes[p.id] ?? 0) === index} className={`h-24 w-20 shrink-0 snap-start overflow-hidden rounded-lg border-2 transition-all ${(imageIndexes[p.id] ?? 0) === index ? "border-[#B8860B] opacity-100" : "border-transparent opacity-65 hover:opacity-100"}`}>
+                              <img src={src} alt={`${p.name} - الصورة ${index + 1}`} className="h-full w-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                        {p.image_urls.length > 1 && <p className="mt-1 text-center text-[11px] text-[#71685E]">اسحب الصور يمينًا ويسارًا · {(imageIndexes[p.id] ?? 0) + 1}/{p.image_urls.length}</p>}
                       </div>
                     ) : <div className="flex h-24 w-20 shrink-0 items-center justify-center rounded-xl bg-[#F2ECE4] text-xs">بدون صورة</div>}
                     <div className="min-w-0 flex-1"><h3 className="font-bold">{p.name}</h3><p className="mt-1 text-sm text-[#71685E]">{Number(p.price || 0) > 0 ? `${Number(p.price).toLocaleString("ar-EG")} ج.م` : "السعر غير مُعرّف حاليًا"} · المخزون: {p.stock ?? 0}</p><p className="mt-1 text-xs text-[#71685E]">{p.is_active ? "ظاهر للزوار" : "مخفي"}</p></div>
