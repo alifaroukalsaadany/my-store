@@ -9,11 +9,11 @@ type Order = {
 };
 type Product = {
   id: string; name: string; description: string; price: number | null;
-  image_urls: string[]; sizes: string[]; colors: string[]; stock: number; is_active: boolean;
+  image_urls: string[]; sizes: string[]; colors: string[]; stock: number; is_active: boolean; category: string;
 };
 
 const WA = "201004151517";
-const blank = { name: "", description: "", price: "", image: "", sizes: "S, M, L, XL", colors: "", stock: "0" };
+const blank = { name: "", description: "", price: "", image: "", sizes: "S, M, L, XL", colors: "", stock: "0", category: "غير مصنف" };
 
 export default function AdminPage() {
   const [key, setKey] = useState("");
@@ -85,7 +85,7 @@ export default function AdminPage() {
         method: editingId ? "PATCH" : "POST",
         body: JSON.stringify({
           ...(editingId ? { id: editingId } : {}),
-          name: form.name, description: form.description, price: form.price.trim() === "" ? 0 : Number(form.price),
+          name: form.name, description: form.description, category: form.category, price: form.price.trim() === "" ? 0 : Number(form.price),
           image_urls: imageUrls,
           sizes: form.sizes.split(",").map(x => x.trim()).filter(Boolean),
           colors: form.colors.split(",").map(x => x.trim()).filter(Boolean),
@@ -108,7 +108,7 @@ export default function AdminPage() {
     setEditingImages(product.image_urls || []);
     setImageFiles([]);
     setImagePreviews([]);
-    setForm({ name: product.name || "", description: product.description || "", price: product.price && product.price > 0 ? String(product.price) : "", image: "", sizes: (product.sizes || []).join(", "), colors: (product.colors || []).join(", "), stock: String(product.stock ?? 0) });
+    setForm({ name: product.name || "", description: product.description || "", price: product.price && product.price > 0 ? String(product.price) : "", image: "", sizes: (product.sizes || []).join(", "), colors: (product.colors || []).join(", "), stock: String(product.stock ?? 0), category: product.category || "غير مصنف" });
     setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -182,7 +182,7 @@ export default function AdminPage() {
                   <h2 className="text-xl font-bold">{editingId ? "تعديل المنتج" : "إضافة منتج جديد"}</h2>
                   <label className="block text-sm">اسم المنتج<input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">وصف المنتج<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="mt-1 w-full rounded-xl border p-3" rows={3} /></label>
-                  <label className="block text-sm">السعر بالجنيه (اختياري)<input type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
+                  <label className="block text-sm">التصنيف<select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="mt-1 w-full rounded-xl border p-3"><option value="غير مصنف">غير مصنف</option><option value="فساتين">فساتين</option><option value="بلوزات">بلوزات</option><option value="بناطيل">بناطيل</option><option value="أطقم">أطقم</option><option value="تريكو وجواكت">تريكو وجواكت</option></select></label>\n                  <label className="block text-sm">السعر بالجنيه (اختياري)<input type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="mt-1 w-full rounded-xl border p-3" /></label>
                   <label className="block text-sm">صورة المنتج
                     <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => {
                       const files = Array.from(e.target.files || []);
@@ -216,7 +216,7 @@ export default function AdminPage() {
                         {p.image_urls.length > 1 && <p className="mt-1 text-center text-[11px] text-[#71685E]">اسحب الصور يمينًا ويسارًا · {(imageIndexes[p.id] ?? 0) + 1}/{p.image_urls.length}</p>}
                       </div>
                     ) : <div className="flex h-24 w-20 shrink-0 items-center justify-center rounded-xl bg-[#F2ECE4] text-xs">بدون صورة</div>}
-                    <div className="min-w-0 flex-1"><h3 className="font-bold">{p.name}</h3><p className="mt-1 text-sm text-[#71685E]">{Number(p.price || 0) > 0 ? `${Number(p.price).toLocaleString("ar-EG")} ج.م` : "السعر غير مُعرّف حاليًا"} · المخزون: {p.stock ?? 0}</p><p className="mt-1 text-xs text-[#71685E]">{p.is_active ? "ظاهر للزوار" : "مخفي"}</p></div>
+                    <div className="min-w-0 flex-1"><h3 className="font-bold">{p.name}</h3><p className="mt-1 text-xs text-[#9B741C]">{p.category || "غير مصنف"}</p><p className="mt-1 text-sm text-[#71685E]">{Number(p.price || 0) > 0 ? `${Number(p.price).toLocaleString("ar-EG")} ج.م` : "السعر غير مُعرّف حاليًا"} · المخزون: {p.stock ?? 0}</p><p className="mt-1 text-xs text-[#71685E]">{p.is_active ? "ظاهر للزوار" : "مخفي"}</p></div>
                     <button onClick={() => startEdit(p)} className="rounded-full border border-[#B8860B] px-4 py-2 text-sm">تعديل</button>
                     <button onClick={() => void toggleProduct(p)} className="rounded-full border px-4 py-2 text-sm">{p.is_active ? "إخفاء" : "إظهار"}</button>
                     <button onClick={() => void deleteProduct(p)} className="rounded-full border border-red-200 px-4 py-2 text-sm text-red-700">حذف</button>
