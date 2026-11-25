@@ -25,6 +25,7 @@ export default function ProductDetailsPage() {
   const [size, setSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState("نقدًا عند الاستلام");
+  const [paymentSettings, setPaymentSettings] = useState({ instapayAccount: "", walletNumber: "" });
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", notes: "" });
   const [saving, setSaving] = useState(false);
   const [order, setOrder] = useState<OrderResult | null>(null);
@@ -48,6 +49,13 @@ export default function ProductDetailsPage() {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [productId]);
+
+  useEffect(() => {
+    fetch("/api/payment-settings", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : null)
+      .then(data => { if (data) setPaymentSettings({ instapayAccount: data.instapayAccount || "", walletNumber: data.walletNumber || "" }); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const refreshCart = () => {
@@ -194,6 +202,8 @@ export default function ProductDetailsPage() {
                       <option value="إنستا باي">إنستا باي</option>
                     </select>
                   </label>
+                  {paymentMethod === "إنستا باي" && <div className="rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-3 text-sm leading-7">حوّل المبلغ إلى حساب إنستا باي: <strong dir="ltr">{paymentSettings.instapayAccount || "بيانات الحساب ستظهر بعد إضافتها من المتجر"}</strong></div>}
+                  {paymentMethod === "محفظة إلكترونية" && <div className="rounded-xl border border-[#d9c9a8] bg-[#fffaf0] p-3 text-sm leading-7">حوّل المبلغ إلى رقم المحفظة: <strong dir="ltr">{paymentSettings.walletNumber || "بيانات المحفظة ستظهر بعد إضافتها من المتجر"}</strong></div>}
                   <label className="mt-3 block text-sm">ملاحظات إضافية
                     <textarea value={customer.notes} onChange={event => setCustomer(old => ({ ...old, notes: event.target.value }))} className="mt-2 w-full rounded-xl border border-[#ded4c8] p-3" rows={2} />
                   </label>
