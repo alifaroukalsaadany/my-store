@@ -19,16 +19,21 @@ export async function POST(request: NextRequest) {
     }
     const allowedPaymentMethods = ["نقدًا عند الاستلام", "محفظة إلكترونية", "إنستا باي"];
     const paymentMethod = allowedPaymentMethods.includes(body.paymentMethod) ? body.paymentMethod : "نقدًا عند الاستلام";
-    const customerNotes = typeof body.notes === "string" ? body.notes.slice(0, 1800) : "";
+    const customerNotes = typeof body.notes === "string" ? body.notes.slice(0, 1500) : "";
+    const governorate = typeof body.governorate === "string" ? body.governorate.trim().slice(0, 100) : "";
+    const city = typeof body.city === "string" ? body.city.trim().slice(0, 100) : "";
+    const senderNumber = typeof body.senderNumber === "string" ? body.senderNumber.trim().slice(0, 40) : "";
+    const proofImageUrl = typeof body.proofImageUrl === "string" && /^https:\/\//i.test(body.proofImageUrl) ? body.proofImageUrl.slice(0, 1000) : "";
+    const totalAmount = Number.isFinite(Number(body.totalAmount)) && Number(body.totalAmount) >= 0 ? Number(body.totalAmount) : 0;
     const order = {
       order_id: body.id.slice(0, 40),
       customer_name: body.name.trim(),
       phone: body.phone.trim(),
-      delivery_address: body.address.trim(),
+      delivery_address: [governorate, city, body.address.trim()].filter(Boolean).join(" - "),
       product: body.product.trim(),
       color: body.color.trim(),
       size: body.size.trim(),
-      notes: `طريقة الدفع: ${paymentMethod}${customerNotes ? `\n${customerNotes}` : ""}`.slice(0, 2000),
+      notes: [`طريقة الدفع: ${paymentMethod}`, `الإجمالي: ${totalAmount} ج.م`, governorate ? `المحافظة: ${governorate}` : "", city ? `المدينة: ${city}` : "", senderNumber ? `رقم التحويل منه: ${senderNumber}` : "", proofImageUrl ? `صورة التحويل: ${proofImageUrl}` : "", customerNotes].filter(Boolean).join("\n").slice(0, 4000),
     };
     const response = await fetch(`${supabaseUrl}/rest/v1/orders`, {
       method: "POST",
