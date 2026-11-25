@@ -9,6 +9,7 @@ function orderId() { return "LV" + Math.random().toString(36).slice(2, 8).toUppe
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
+  const [paymentMethod, setPaymentMethod] = useState("نقدًا عند الاستلام");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<string[]>([]);
@@ -40,7 +41,7 @@ export default function CartPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id, name: customer.name.trim(), phone: customer.phone.trim(), address: customer.address.trim(),
-            product: item.name, color: item.color, size: item.size,
+            product: item.name, color: item.color, size: item.size, paymentMethod,
             notes: `الكمية: ${item.quantity}${item.price > 0 ? ` · سعر القطعة: ${item.price} ج.م · إجمالي الصنف: ${item.price * item.quantity} ج.م` : " · السعر غير مُعرّف حاليًا"}`,
           }),
         });
@@ -109,6 +110,7 @@ export default function CartPage() {
                 <label className="block text-sm">الاسم<input required value={customer.name} onChange={e => setCustomer(old => ({ ...old, name: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
                 <label className="block text-sm">رقم الهاتف / واتساب<input required type="tel" value={customer.phone} onChange={e => setCustomer(old => ({ ...old, phone: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
                 <label className="block text-sm">عنوان التوصيل<textarea required rows={3} value={customer.address} onChange={e => setCustomer(old => ({ ...old, address: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#ded4c8] p-3" /></label>
+                <label className="block text-sm font-semibold">طريقة الدفع<select required value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 w-full rounded-xl border border-[#ded4c8] bg-[#FAF8F5] p-3"><option value="نقدًا عند الاستلام">نقدًا عند الاستلام</option><option value="محفظة إلكترونية">محفظة إلكترونية</option><option value="إنستا باي">إنستا باي</option></select></label>
                 {error && <p role="alert" className="text-sm leading-6 text-red-700">{error}</p>}
                 <button disabled={busy} className="w-full rounded-full bg-[#1E1E1E] py-3 font-semibold text-white hover:bg-[#B8860B] disabled:opacity-50">{busy ? "جارٍ تأكيد الطلب…" : "تأكيد الطلبات"}</button>
               </form>
