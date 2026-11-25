@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { upload } from "@vercel/blob/client";
 
 type Order = {
@@ -29,6 +29,22 @@ export default function AdminPage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingImages, setEditingImages] = useState<string[]>([]);
+  const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!products.some(product => (product.image_urls || []).length > 1)) return;
+    const timer = window.setInterval(() => {
+      setImageIndexes(current => {
+        const next = { ...current };
+        products.forEach(product => {
+          const count = (product.image_urls || []).length;
+          if (count > 1) next[product.id] = ((current[product.id] ?? 0) + 1) % count;
+        });
+        return next;
+      });
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [products]);
 
   async function api(path: string, init: RequestInit = {}) {
     const response = await fetch(path, {
@@ -188,7 +204,18 @@ export default function AdminPage() {
                   <h2 className="text-xl font-bold">كل المنتجات</h2>
                   {products.length === 0 && <p className="rounded-2xl border border-dashed bg-white p-8 text-center text-[#71685E]">لا توجد منتجات مسجلة في قاعدة البيانات.</p>}
                   {products.map(p => <article key={p.id} className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4">
-                    {p.image_urls?.[0] ? <img src={p.image_urls[0]} alt={p.name} className="h-24 w-20 rounded-xl object-cover" /> : <div className="flex h-24 w-20 items-center justify-center rounded-xl bg-[#F2ECE4] text-xs">بدون صورة</div>}
+                    {p.image_urls?.length ? (
+                      <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-[#F2ECE4]">
+                        <img src={p.image_urls[imageIndexes[p.id] ?? 0]} alt={p.name} className="h-full w-full object-cover" />
+                        {p.image_urls.length > 1 && (
+                          <>
+                            <button type="button" aria-label="الصورة السابقة" onClick={() => setImageIndexes(old => ({ ...old, [p.id]: ((old[p.id] ?? 0) - 1 + p.image_urls.length) % p.image_urls.length }))} className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-1 text-xs text-white">‹</button>
+                            <button type="button" aria-label="الصورة التالية" onClick={() => setImageIndexes(old => ({ ...old, [p.id]: ((old[p.id] ?? 0) + 1) % p.image_urls.length }))} className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-1.5 py-1 text-xs text-white">›</button>
+                            <span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-1.5 text-[10px] text-white" dir="ltr">{(imageIndexes[p.id] ?? 0) + 1}/{p.image_urls.length}</span>
+                          </>
+                        )}
+                      </div>
+                    ) : <div className="flex h-24 w-20 shrink-0 items-center justify-center rounded-xl bg-[#F2ECE4] text-xs">بدون صورة</div>}
                     <div className="min-w-0 flex-1"><h3 className="font-bold">{p.name}</h3><p className="mt-1 text-sm text-[#71685E]">{Number(p.price || 0) > 0 ? `${Number(p.price).toLocaleString("ar-EG")} ج.م` : "السعر غير مُعرّف حاليًا"} · المخزون: {p.stock ?? 0}</p><p className="mt-1 text-xs text-[#71685E]">{p.is_active ? "ظاهر للزوار" : "مخفي"}</p></div>
                     <button onClick={() => startEdit(p)} className="rounded-full border border-[#B8860B] px-4 py-2 text-sm">تعديل</button>
                     <button onClick={() => void toggleProduct(p)} className="rounded-full border px-4 py-2 text-sm">{p.is_active ? "إخفاء" : "إظهار"}</button>
