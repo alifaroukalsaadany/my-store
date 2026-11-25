@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
     if (!body || required.some((key) => typeof body[key] !== "string" || !body[key].trim() || body[key].length > 1000)) {
       return NextResponse.json({ error: "Invalid order." }, { status: 400 });
     }
+    const allowedPaymentMethods = ["نقدًا عند الاستلام", "محفظة إلكترونية", "إنستا باي"];
+    const paymentMethod = allowedPaymentMethods.includes(body.paymentMethod) ? body.paymentMethod : "نقدًا عند الاستلام";
+    const customerNotes = typeof body.notes === "string" ? body.notes.slice(0, 1800) : "";
     const order = {
       order_id: body.id.slice(0, 40),
       customer_name: body.name.trim(),
@@ -25,7 +28,7 @@ export async function POST(request: NextRequest) {
       product: body.product.trim(),
       color: body.color.trim(),
       size: body.size.trim(),
-      notes: typeof body.notes === "string" ? body.notes.slice(0, 2000) : "",
+      notes: `طريقة الدفع: ${paymentMethod}${customerNotes ? `\n${customerNotes}` : ""}`.slice(0, 2000),
     };
     const response = await fetch(`${supabaseUrl}/rest/v1/orders`, {
       method: "POST",
@@ -66,7 +69,9 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     orders: rows.map((row: Record<string, string>) => ({
       id: row.order_id, createdAt: row.created_at, name: row.customer_name, phone: row.phone,
-      address: row.delivery_address, product: row.product, color: row.color, size: row.size, notes: row.notes,
+      address: row.delivery_address, product: row.product, color: row.color, size: row.size,
+      paymentMethod: (row.notes || "").match(/^طريقة الدفع: ([^\n]+)/)?.[1] || "غير محددة",
+      notes: (row.notes || "").replace(/^طريقة الدفع: [^\n]+\n?/, ""),
     })),
   }, { headers: { "Cache-Control": "no-store" } });
 }
