@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       product: body.product.trim(),
       color: body.color.trim(),
       size: body.size.trim(),
-      notes: [`طريقة الدفع: ${paymentMethod}`, `الإجمالي: ${totalAmount} ج.م`, governorate ? `المحافظة: ${governorate}` : "", city ? `المدينة: ${city}` : "", senderNumber ? `رقم التحويل منه: ${senderNumber}` : "", proofImageUrl ? `صورة التحويل: ${proofImageUrl}` : "", customerNotes].filter(Boolean).join("\n").slice(0, 4000),
+      notes: [`حالة الطلب: تم استلام طلبك`, `طريقة الدفع: ${paymentMethod}`, `الإجمالي: ${totalAmount} ج.م`, governorate ? `المحافظة: ${governorate}` : "", city ? `المدينة: ${city}` : "", senderNumber ? `رقم التحويل منه: ${senderNumber}` : "", proofImageUrl ? `صورة التحويل: ${proofImageUrl}` : "", customerNotes].filter(Boolean).join("\n").slice(0, 4000),
     };
     const response = await fetch(`${supabaseUrl}/rest/v1/orders`, {
       method: "POST",
@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     orders: rows.map((row: Record<string, string>) => ({
       id: row.order_id, createdAt: row.created_at, name: row.customer_name, phone: row.phone,
+      status: (row.notes || "").match(/^حالة الطلب: ([^\n]+)/m)?.[1] || "تم استلام طلبك",
       address: row.delivery_address, product: row.product, color: row.color, size: row.size,
       paymentMethod: (row.notes || "").match(/^طريقة الدفع: ([^\n]+)/)?.[1] || "غير محددة",
       totalAmount: Number((row.notes || "").match(/^الإجمالي: ([0-9.]+)/m)?.[1] || 0),
@@ -81,7 +82,32 @@ export async function GET(request: NextRequest) {
       city: (row.notes || "").match(/^المدينة: ([^\n]+)/m)?.[1] || "",
       senderNumber: (row.notes || "").match(/^رقم التحويل منه: ([^\n]+)/m)?.[1] || "",
       proofImageUrl: (row.notes || "").match(/^صورة التحويل: (https:\/\/[^\n]+)/m)?.[1] || "",
-      notes: (row.notes || "").split("\n").filter((line: string) => !/^(طريقة الدفع:|الإجمالي:|المحافظة:|المدينة:|رقم التحويل منه:|صورة التحويل:)/.test(line)).join("\n"),
+      notes: (row.notes || "").split("\n").filter((line: string) => !/^(حالة الطلب:|طريقة الدفع:|الإجمالي:|المحافظة:|المدينة:|رقم التحويل منه:|صورة التحويل:)/.test(line)).join("\n"),
     })),
   }, { headers: { "Cache-Control": "no-store" } });
+}
+export async function PATCH(request: NextRequest) {
+  if (!configured()) return NextResponse.json({ error: "Order storage is not configured." }, { status: 503 });
+  const supplied = request.headers.get("x-owner-key");
+  if (!supplied || supplied !== ownerKey) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  try {
+    const body = await request.json();
+    const statuses = ["تم استلام طلبك", "تم تجهيز طلبك", "طلبك في الطريق", "تم تسليم طلبك"];
+    if (typeof body.id !== "string" || !statuses.includes(body.status)) return NextResponse.json({ error: "Invalid order status." }, { status: 400 });
+    const lookup = await fetch(`${supabaseUrl}/rest/v1/orders?order_id=eq.${encodeURIComponent(body.id)}&select=notes`, {
+      headers: { apikey: serviceKey!, Authorization: `Bearer ${serviceKey}` }, cache: "no-store"
+    });
+    if (!lookup.ok) return NextResponse.json({ error: "Could not find order." }, { status: 502 });
+    const rows = await lookup.json();
+    if (!rows.length) return NextResponse.json({ error: "Order not found." }, { status: 404 });
+    const notes = String(rows[0].notes || "").split("\n").filter((line: string) => !line.startsWith("حالة الطلب:"));
+    const updatedNotes = [`حالة الطلب: ${body.status}`, ...notes].join("\n").slice(0, 4000);
+    const update = await fetch(`${supabaseUrl}/rest/v1/orders?order_id=eq.${encodeURIComponent(body.id)}`, {
+      method: "PATCH",
+      headers: { apikey: serviceKey!, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ notes: updatedNotes }), cache: "no-store"
+    });
+    if (!update.ok) return NextResponse.json({ error: "Could not update order status." }, { status: 502 });
+    return NextResponse.json({ ok: true, status: body.status });
+  } catch { return NextResponse.json({ error: "Invalid request." }, { status: 400 }); }
 }
