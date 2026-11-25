@@ -6,6 +6,7 @@ import { upload } from "@vercel/blob/client";
 type Order = {
   id: string; createdAt: string; name: string; phone: string; address: string;
   product: string; color: string; size: string; paymentMethod: string; notes: string;
+  governorate?: string; city?: string; senderNumber?: string; proofImageUrl?: string; totalAmount?: number;
 };
 type PaymentSettings = { instapayAccount: string; walletNumber: string };
 type Product = {
@@ -286,7 +287,7 @@ export default function AdminPage() {
                 {orders.length === 0 ? <div className="rounded-2xl border border-dashed bg-white p-12 text-center text-[#71685E]">لا توجد طلبات حتى الآن.</div> : orders.map(order => (
                   <article key={order.id} className="rounded-2xl border border-[#e9e0d5] bg-white p-5 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-lg font-bold">{order.name}</h3><span dir="ltr" className="text-sm text-[#9B741C]">{order.id}</span></div>
-                    <p className="mt-3 text-sm leading-8">{order.product} · {order.color} · {order.size}<br />الهاتف: <span dir="ltr">{order.phone}</span><br />العنوان: {order.address}<br />طريقة الدفع: <strong>{order.paymentMethod || "غير محددة"}</strong><br />ملاحظات: {order.notes || "لا توجد"}</p>
+                    <p className="mt-3 text-sm leading-8">{order.product} · {order.color} · {order.size}<br />الهاتف: <span dir="ltr">{order.phone}</span><br />المحافظة: {order.governorate || "—"} · المدينة: {order.city || "—"}<br />العنوان: {order.address}<br />طريقة الدفع: <strong>{order.paymentMethod || "غير محددة"}</strong><br />الإجمالي: <strong>{Number(order.totalAmount || 0).toLocaleString("ar-EG")} ج.م</strong><br />رقم التحويل منه: <span dir="ltr">{order.senderNumber || "—"}</span><br />ملاحظات: {order.notes || "لا توجد"}</p>{order.proofImageUrl && <a href={order.proofImageUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-full border border-[#B8860B] px-4 py-2 text-sm font-semibold text-[#8A671C]">عرض صورة التحويل</a>}
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3"><span className="text-xs text-[#8b8176]">{order.createdAt ? new Date(order.createdAt).toLocaleString("ar-EG") : ""}</span><button onClick={() => sendWhatsApp(order)} className="rounded-full bg-[#1E1E1E] px-5 py-2 text-sm text-white">إرسال التفاصيل عبر واتساب</button></div>
                   </article>
                 ))}
