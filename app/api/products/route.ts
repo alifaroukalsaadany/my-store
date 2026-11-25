@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
     if (!body?.id) return NextResponse.json({ error: "معرّف المنتج مطلوب." }, { status: 400 });
-    const allowed = ["name", "description", "price", "image_urls", "sizes", "colors", "stock", "is_active"];
+    const allowed = ["name", "category", "description", "price", "image_urls", "sizes", "colors", "stock", "is_active"];
     const update: Record<string, unknown> = {};
     for (const key of allowed) if (body[key] !== undefined) update[key] = body[key];
     const response = await fetch(`${url}/rest/v1/products?id=eq.${encodeURIComponent(String(body.id))}`, {
