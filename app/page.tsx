@@ -11,6 +11,14 @@ const WA = "201004151517";
 const ADDRESS = "حدائق حلوان - شارع توتنجي - بجوار بن الغرباوي";
 const initialProducts: Product[] = [];
 
+const heroCopies = [
+  { arTitle: "أناقتك… تبدأ من اختيارك", arTagline: "اكتشفي اختيارات تكمّل أناقتك كل يوم", enTitle: "Your style. Your statement.", enTagline: "Discover pieces that make every day feel special" },
+  { arTitle: "كل إطلالة… ليها حكاية", arTagline: "اختاري القطعة اللي تعبّر عنك", enTitle: "Every look tells a story.", enTagline: "Find the piece that feels like you" },
+  { arTitle: "تفاصيل صغيرة… وأناقة كبيرة", arTagline: "جددي إطلالتك بلمسة مختلفة", enTitle: "Little details. Lasting style.", enTagline: "Refresh your look with something special" },
+  { arTitle: "كوني دايمًا على طبيعتك", arTagline: "ستايل يليق بيكي في كل وقت", enTitle: "Always be yourself.", enTagline: "A style that feels right, every day" },
+  { arTitle: "اختاري إحساسك… والباقي علينا", arTagline: "اكتشفي مجموعتنا واختاري الأقرب ليكي", enTitle: "Choose your feeling.", enTagline: "Explore the collection and find your favorite" }
+];
+
 const copy = {
   ar: {
     tagline:"اكتشفي اختيارات تكمّل أناقتك كل يوم", collection:"تسوقي المجموعة", all:"كل القطع", shirts:"قمصان وكاجوال", knit:"تريكو وجواكت", outfits:"أطقم خروج",
@@ -55,6 +63,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productsLoading, setProductsLoading] = useState(true);
   const [heroImage, setHeroImage] = useState("");
+  const [heroCopyIndex, setHeroCopyIndex] = useState(0);
   const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({});
   const [imageReset, setImageReset] = useState<Record<string, boolean>>({});
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -79,6 +88,18 @@ export default function Home() {
   const visibleProducts = useMemo(() => products.filter(p => filter === "all" || p.category === filter), [products, filter]);
 
   useEffect(() => {
+    let nextCopy = Math.floor(Math.random() * heroCopies.length);
+    try {
+      const previousCopy = Number(sessionStorage.getItem("level-hero-copy-index"));
+      if (heroCopies.length > 1 && Number.isInteger(previousCopy) && previousCopy >= 0 && previousCopy < heroCopies.length && nextCopy === previousCopy) {
+        nextCopy = (nextCopy + 1 + Math.floor(Math.random() * (heroCopies.length - 1))) % heroCopies.length;
+      }
+      sessionStorage.setItem("level-hero-copy-index", String(nextCopy));
+    } catch {}
+    setHeroCopyIndex(nextCopy);
+  }, []);
+
+  useEffect(() => {
     let active = true;
     fetch("/api/products", { cache: "no-store" })
       .then(async response => {
@@ -95,7 +116,17 @@ export default function Home() {
         if (active) {
           setProducts(mapped);
           const heroImages = mapped.map(p => p.image).filter(Boolean);
-          if (heroImages.length) setHeroImage(heroImages[Math.floor(Math.random() * heroImages.length)]);
+          if (heroImages.length) {
+            let candidates = heroImages;
+            try {
+              const previousImage = sessionStorage.getItem("level-hero-image");
+              const withoutPrevious = heroImages.filter(image => image !== previousImage);
+              if (withoutPrevious.length) candidates = withoutPrevious;
+            } catch {}
+            const nextImage = candidates[Math.floor(Math.random() * candidates.length)];
+            setHeroImage(nextImage);
+            try { sessionStorage.setItem("level-hero-image", nextImage); } catch {}
+          }
         }
       })
       .catch(() => { if (active) setProducts([]); })
@@ -209,8 +240,8 @@ export default function Home() {
         <div className="relative mx-auto flex min-h-[calc(100svh-76px)] max-w-7xl items-end px-5 pb-14 pt-20 md:items-center md:px-10 md:pb-20">
           <div className="max-w-2xl text-white">
             <p className="mb-5 inline-flex rounded-full border border-white/45 bg-white/10 px-4 py-2 text-xs font-semibold tracking-[.24em] backdrop-blur-sm">LEVEL WOMEN WEAR</p>
-            <h1 className="max-w-2xl text-4xl font-semibold leading-[1.35] drop-shadow-md sm:text-5xl md:text-7xl">{isAr ? "أناقتك… تبدأ من اختيارك" : "Your style. Your statement."}</h1>
-            <p className="mt-4 max-w-lg text-base leading-8 text-white/90 drop-shadow sm:text-lg">{t.tagline}</p>
+            <h1 className="max-w-2xl text-4xl font-semibold leading-[1.35] drop-shadow-md sm:text-5xl md:text-7xl">{isAr ? heroCopies[heroCopyIndex].arTitle : heroCopies[heroCopyIndex].enTitle}</h1>
+            <p className="mt-4 max-w-lg text-base leading-8 text-white/90 drop-shadow sm:text-lg">{isAr ? heroCopies[heroCopyIndex].arTagline : heroCopies[heroCopyIndex].enTagline}</p>
             <a href="#collection" className="mt-8 inline-flex rounded-full bg-white px-7 py-3.5 font-semibold text-[#1E1E1E] transition hover:bg-[#e8d8bd]">{t.collection}<span className="ms-3" aria-hidden="true">←</span></a>
           </div>
         </div>
