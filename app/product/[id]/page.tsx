@@ -8,6 +8,7 @@ type Product = {
   image_urls?: string[]; sizes?: string[]; colors?: string[]; stock?: number;
 };
 type OrderResult = { id: string };
+type CartItem = { id: string; name: string; image: string; price: number; color: string; size: string; quantity: number };
 
 function makeOrderId() {
   return "LV" + Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -26,6 +27,7 @@ export default function ProductDetailsPage() {
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", notes: "" });
   const [saving, setSaving] = useState(false);
   const [order, setOrder] = useState<OrderResult | null>(null);
+  const [cartMessage, setCartMessage] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -48,6 +50,19 @@ export default function ProductDetailsPage() {
   const images = product?.image_urls?.filter(Boolean) || [];
   const price = Number(product?.price || 0);
   const total = useMemo(() => price > 0 ? price * quantity : 0, [price, quantity]);
+
+  function addToCart() {
+    if (!product) return;
+    const key = "level-shopping-cart";
+    let items: CartItem[] = [];
+    try { items = JSON.parse(localStorage.getItem(key) || "[]"); } catch { items = []; }
+    const existing = items.findIndex(item => item.id === product.id && item.color === color && item.size === size);
+    if (existing >= 0) items[existing] = { ...items[existing], quantity: items[existing].quantity + quantity };
+    else items.push({ id: String(product.id), name: product.name, image: images[0] || "", price, color, size, quantity });
+    localStorage.setItem(key, JSON.stringify(items));
+    window.dispatchEvent(new Event("level-cart-updated"));
+    setCartMessage("اتضاف المنتج لعربة التسوق بنجاح");
+  }
 
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,7 +94,7 @@ export default function ProductDetailsPage() {
       <header className="border-b border-[#e8dfd2] bg-white/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
           <a href="/" className="text-2xl font-black tracking-[.16em]">LE<span className="text-[#B8860B]">V</span>EL</a>
-          <a href="/" className="rounded-full border border-[#d8c7a9] px-4 py-2 text-sm">العودة للمنتجات</a>
+          <div className="flex gap-2"><a href="/cart" className="rounded-full bg-[#1E1E1E] px-4 py-2 text-sm text-white">عربة التسوق</a><a href="/" className="rounded-full border border-[#d8c7a9] px-4 py-2 text-sm">العودة للمنتجات</a></div>
         </div>
       </header>
 
@@ -138,6 +153,9 @@ export default function ProductDetailsPage() {
                   </div>
                   {Number(product.stock || 0) > 0 && <p className="mt-2 text-xs text-[#82776b]">المتاح: {product.stock} قطعة</p>}
                 </div>
+
+                <button type="button" onClick={addToCart} className="w-full rounded-full border-2 border-[#1E1E1E] py-3 font-semibold transition hover:bg-[#F2ECE4]">أضف إلى عربة التسوق</button>
+                {cartMessage && <div role="status" className="rounded-xl bg-[#F2ECE4] p-3 text-center text-sm text-[#6b5424]">{cartMessage} · <a href="/cart" className="font-bold underline">عرض العربة</a></div>}
 
                 <div className="border-t border-[#eee6dc] pt-5">
                   <h2 className="text-lg font-bold">بيانات التوصيل</h2>
