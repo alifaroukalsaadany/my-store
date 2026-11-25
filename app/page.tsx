@@ -13,7 +13,7 @@ const initialProducts: Product[] = [];
 
 const copy = {
   ar: {
-    tagline:"أناقة يومية بتفاصيل راقية", collection:"تسوقي المجموعة", all:"كل القطع", shirts:"قمصان وكاجوال", knit:"تريكو وجواكت", outfits:"أطقم خروج",
+    tagline:"اكتشفي اختيارات تكمّل أناقتك كل يوم", collection:"تسوقي المجموعة", all:"كل القطع", shirts:"قمصان وكاجوال", knit:"تريكو وجواكت", outfits:"أطقم خروج",
     preview:"وضع المعاينة", add:"إضافة قطعة جديدة", change:"تغيير الصورة", order:"اطلبي الآن مباشرة", unknown:"السعر غير مُعرّف حاليًا",
     location:"زورينا في المتجر", address:ADDRESS, whatsapp:"تواصلي عبر واتساب", benefitTitle:"تسوق أسهل… ووقتك أغلى",
     benefit:"اطلبي من مكانك بدل مشوار طويل من المناطق البعيدة، وسجّلي طلبك مباشرة دون انتظار الرد على رسائل السوشيال ميديا.",
@@ -25,7 +25,7 @@ const copy = {
     adminHint:"أدخلي مفتاح الإدارة لعرض الطلبات المحفوظة.", empty:"اكتشفي قطعنا المختارة بعناية.", priceLine:"السعر غير مُعرّف حاليًا"
   },
   en: {
-    tagline:"Everyday elegance, thoughtfully detailed", collection:"Shop the collection", all:"All pieces", shirts:"Shirts & Casual", knit:"Knitwear & Jackets", outfits:"Outfits",
+    tagline:"Discover pieces that make every day feel special", collection:"Shop the collection", all:"All pieces", shirts:"Shirts & Casual", knit:"Knitwear & Jackets", outfits:"Outfits",
     preview:"Preview Mode", add:"Add New Piece", change:"Change Photo", order:"Order Directly", unknown:"Price: Unknown",
     location:"Visit our boutique", address:ADDRESS, whatsapp:"Chat on WhatsApp", benefitTitle:"A simpler way to shop",
     benefit:"Order from wherever you are instead of travelling from distant areas. Submit your order directly without waiting for slow social-media replies.",
@@ -203,18 +203,18 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-16 md:grid-cols-[1.05fr_.95fr] md:px-8 md:py-24">
-          <div>
-            <p className="mb-4 text-sm font-semibold tracking-[.24em] text-[#9B741C]">LEVEL WOMEN WEAR</p>
-            <h1 className="max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">{isAr ? "اختاري إطلالتك… واتركي الباقي علينا" : "Find your look. We’ll take care of the rest."}</h1>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-[#71685E]">{t.tagline}</p>
-            <a href="#collection" className="mt-8 inline-flex rounded-full bg-[#1E1E1E] px-7 py-3 text-white transition hover:bg-[#B8860B]">{t.collection}</a>
-          </div>
-          <div className="rounded-[2rem] bg-[#F2ECE4] p-3 shadow-sm">
-            {heroImage ? <img src={heroImage} alt="Level Women Wear collection" className="h-[390px] w-full rounded-[1.5rem] object-cover md:h-[510px]" /> : <div className="flex h-[390px] items-center justify-center rounded-[1.5rem] bg-[#E9DFD2] text-3xl font-black tracking-[.2em] text-[#9B8B78] md:h-[510px]">LEVEL</div>}
+      <section className="relative isolate min-h-[calc(100svh-76px)] overflow-hidden bg-[#3b3027]">
+        {heroImage ? <img src={heroImage} alt="Level Women Wear collection" className="absolute inset-0 h-full w-full object-cover object-center" /> : <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_35%,#b9a58e_0%,#756452_42%,#302820_100%)]" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/10" />
+        <div className="relative mx-auto flex min-h-[calc(100svh-76px)] max-w-7xl items-end px-5 pb-14 pt-20 md:items-center md:px-10 md:pb-20">
+          <div className="max-w-2xl text-white">
+            <p className="mb-5 inline-flex rounded-full border border-white/45 bg-white/10 px-4 py-2 text-xs font-semibold tracking-[.24em] backdrop-blur-sm">LEVEL WOMEN WEAR</p>
+            <h1 className="max-w-2xl text-4xl font-semibold leading-[1.35] drop-shadow-md sm:text-5xl md:text-7xl">{isAr ? "أناقتك… تبدأ من اختيارك" : "Your style. Your statement."}</h1>
+            <p className="mt-4 max-w-lg text-base leading-8 text-white/90 drop-shadow sm:text-lg">{t.tagline}</p>
+            <a href="#collection" className="mt-8 inline-flex rounded-full bg-white px-7 py-3.5 font-semibold text-[#1E1E1E] transition hover:bg-[#e8d8bd]">{t.collection}<span className="ms-3" aria-hidden="true">←</span></a>
           </div>
         </div>
+        <div className="pointer-events-none absolute bottom-5 left-1/2 h-1 w-16 -translate-x-1/2 rounded-full bg-white/65 md:hidden" />
       </section>
 
       <section id="collection" className="mx-auto max-w-7xl px-4 py-12 md:px-8 md:py-16">
