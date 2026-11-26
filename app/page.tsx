@@ -234,7 +234,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#FAF8F5] text-[#1E1E1E]" dir={isAr ? "rtl" : "ltr"}>
       <header className="sticky top-0 z-30 border-b border-[#e8dfd2] bg-[#FAF8F5]/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-8">
-          <a href="#" className="text-2xl font-black tracking-[.16em]">LE<span className="text-[#B8860B]">V</span>EL</a>
+          <a href="#" dir="ltr" aria-label="LEVEL" className="text-2xl font-black tracking-[.16em] [unicode-bidi:isolate]">LE<span className="text-[#B8860B]">V</span>EL</a>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <a href="/account" className="rounded-full border border-[#d8c7a9] bg-white px-3 py-2 text-xs font-semibold">حسابي / تسجيل الدخول</a>
             <a href="/track-order" className="rounded-full border border-[#d8c7a9] bg-white px-3 py-2 text-xs font-semibold">تابع طلبك</a>
