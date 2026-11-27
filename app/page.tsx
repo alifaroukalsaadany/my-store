@@ -178,7 +178,20 @@ export default function Home() {
       color:form.color, size:form.size, notes:form.notes.trim()
     };
     try {
-      const response = await fetch("/api/orders", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(order) });
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
+      let authorization = "";
+      if (supabaseUrl && supabaseKey) {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.access_token) authorization = `Bearer ${data.session.access_token}`;
+      }
+      const response = await fetch("/api/orders", {
+        method:"POST",
+        headers:{"Content-Type":"application/json", ...(authorization ? { Authorization: authorization } : {})},
+        body:JSON.stringify({...order, items:[{name:order.product,color:order.color,size:order.size,quantity:1,price:0}]})
+      });
       if (!response.ok) throw new Error("Could not save order");
       setDone(order);
       try {
