@@ -75,6 +75,46 @@ export async function POST(request: NextRequest) {
       console.error("Order insert failed:", response.status, detail);
       return NextResponse.json({ error: "Could not save order." }, { status: 502 });
     }
+    const resendKey = process.env.RESEND_API_KEY;
+    const notificationEmail = process.env.ORDER_NOTIFICATION_EMAIL;
+    if (resendKey && notificationEmail) {
+      const itemLines = items.map((item: {name:string;color:string;size:string;quantity:number;price:number}) =>
+        `- ${item.name} | اللون: ${item.color} | المقاس: ${item.size} | الكمية: ${item.quantity} | السعر: ${item.price} ج.م`
+      ).join("\\n");
+      const emailText = [
+        "تم استلام طلب جديد من متجر LEVEL Women Wear",
+        `رقم الطلب: ${order.order_id}`,
+        `اسم العميل: ${order.customer_name}`,
+        `الهاتف: ${order.phone}`,
+        `العنوان: ${order.delivery_address}`,
+        "المنتجات:",
+        itemLines,
+        `طريقة الدفع: ${paymentMethod}`,
+        `الإجمالي: ${totalAmount} ج.م`,
+        customerNotes ? `ملاحظات العميل: ${customerNotes}` : "",
+      ].filter(Boolean).join("\\n");
+      try {
+        const mailResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "LEVEL Demo <onboarding@resend.dev>",
+            to: [notificationEmail],
+            subject: `طلب جديد #${order.order_id} - LEVEL Women Wear`,
+            text: emailText,
+          }),
+          cache: "no-store",
+        });
+        if (!mailResponse.ok) {
+          console.error("Order notification email failed:", mailResponse.status, await mailResponse.text());
+        }
+      } catch (emailError) {
+        console.error("Order notification email request failed:", emailError);
+      }
+    }
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
