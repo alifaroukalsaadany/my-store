@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { EGYPT_LOCATIONS } from "../lib/egypt-locations";
+import { createClient } from "@supabase/supabase-js";
 
 type CartItem = { id: string; name: string; image: string; price: number; color: string; size: string; quantity: number };
 const CART_KEY = "level-shopping-cart";
@@ -54,21 +55,29 @@ export default function CartPage() {
         if (!uploadResponse.ok) throw new Error(uploadData.error || "تعذر رفع صورة التحويل.");
         proofImageUrl = uploadData.url;
       }
-      for (const item of items) {
-        const id = orderId();
-        const response = await fetch("/api/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id, name: customer.name.trim(), phone: customer.phone.trim(), governorate: customer.governorate, city: customer.city,
-            senderNumber, proofImageUrl, totalAmount: item.price > 0 ? item.price * item.quantity : 0, address: customer.address.trim(),
-            product: item.name, color: item.color, size: item.size, paymentMethod,
-            notes: `الكمية: ${item.quantity}${item.price > 0 ? ` · سعر القطعة: ${item.price} ج.م · إجمالي الصنف: ${item.price * item.quantity} ج.م` : " · السعر غير مُعرّف حاليًا"}`,
-          }),
-        });
-        if (!response.ok) throw new Error("تعذر تسجيل كل الطلبات. احتفظنا بمحتويات العربة؛ راجع الإدارة قبل إعادة المحاولة لتجنب تكرار طلب تم تسجيله.");
-        completed.push(id);
+      const id = orderId();
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
+      let authorization = "";
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.access_token) authorization = `Bearer ${data.session.access_token}`;
       }
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(authorization ? { Authorization: authorization } : {}) },
+        body: JSON.stringify({
+          id, name: customer.name.trim(), phone: customer.phone.trim(), governorate: customer.governorate, city: customer.city,
+          senderNumber, proofImageUrl, totalAmount: items.reduce((sum, item) => sum + (item.price > 0 ? item.price * item.quantity : 0), 0),
+          address: customer.address.trim(), product: items.map(item => item.name).join("، "),
+          color: items.length === 1 ? items[0].color : "متعدد", size: items.length === 1 ? items[0].size : "متعدد", paymentMethod,
+          items: items.map(item => ({ name: item.name, color: item.color, size: item.size, quantity: item.quantity, price: item.price })),
+          notes: items.some(item => !(item.price > 0)) ? "بعض أسعار المنتجات غير مُعرّفة حاليًا" : "",
+        }),
+      });
+      if (!response.ok) throw new Error("تعذر تسجيل الطلب. احتفظنا بمحتويات العربة؛ حاول مرة أخرى بعد مراجعة الإدارة.");
+      completed.push(id);
       setSuccess(completed);
       save([]);
     } catch (err) {
@@ -88,8 +97,8 @@ export default function CartPage() {
         <h1 className="text-3xl font-bold">عربة التسوق</h1>
         {success.length > 0 ? (
           <section className="mt-7 rounded-3xl border border-[#e9e0d5] bg-white p-8 text-center">
-            <div className="text-3xl">✓</div><h2 className="mt-3 text-2xl font-bold">تم تسجيل طلباتك بنجاح</h2>
-            <p className="mt-3 text-[#71685E]">أرقام الطلبات: {success.join(" · ")}</p>
+            <div className="text-3xl">✓</div><h2 className="mt-3 text-2xl font-bold">تم تسجيل طلبك بنجاح</h2>
+            <p className="mt-3 text-[#71685E]">رقم الطلب: {success[0]}</p>
             <a href="/" className="mt-6 inline-flex rounded-full bg-[#1E1E1E] px-7 py-3 text-white">العودة للمتجر</a>
           </section>
         ) : items.length === 0 ? (
