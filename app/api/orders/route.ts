@@ -13,9 +13,31 @@ export async function POST(request: NextRequest) {
   if (!configured()) return NextResponse.json({ error: "Order storage is not configured." }, { status: 503 });
   try {
     const body = await request.json();
-    const required = ["id","name","phone","address","product","color","size"];
+    const required = ["id","name","phone","address"];
     if (!body || required.some((key) => typeof body[key] !== "string" || !body[key].trim() || body[key].length > 1000)) {
       return NextResponse.json({ error: "Invalid order." }, { status: 400 });
+    }
+    const items = Array.isArray(body.items) && body.items.length
+      ? body.items.slice(0, 50).map((item: Record<string, unknown>) => ({
+          name: String(item.name || "").slice(0, 300), color: String(item.color || "").slice(0, 100),
+          size: String(item.size || "").slice(0, 100), quantity: Math.max(1, Math.min(99, Number(item.quantity) || 1)),
+          price: Number.isFinite(Number(item.price)) && Number(item.price) >= 0 ? Number(item.price) : 0,
+        }))
+      : [{ name: String(body.product || ""), color: String(body.color || ""), size: String(body.size || ""), quantity: 1, price: 0 }];
+    if (items.some((item: {name:string;color:string;size:string}) => !item.name || !item.color || !item.size)) {
+      return NextResponse.json({ error: "Invalid order items." }, { status: 400 });
+    }
+    let userId: string | null = null;
+    const authorization = request.headers.get("authorization") || "";
+    const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+    if (accessToken) {
+      const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        headers: { apikey: serviceKey!, Authorization: `Bearer ${accessToken}` }, cache: "no-store"
+      });
+      if (userResponse.ok) {
+        const authUser = await userResponse.json();
+        if (typeof authUser.id === "string") userId = authUser.id;
+      }
     }
     const allowedPaymentMethods = ["نقدًا عند الاستلام", "محفظة إلكترونية", "إنستا باي"];
     const paymentMethod = allowedPaymentMethods.includes(body.paymentMethod) ? body.paymentMethod : "نقدًا عند الاستلام";
@@ -30,9 +52,11 @@ export async function POST(request: NextRequest) {
       customer_name: body.name.trim(),
       phone: body.phone.trim(),
       delivery_address: [governorate, city, body.address.trim()].filter(Boolean).join(" - "),
-      product: body.product.trim(),
-      color: body.color.trim(),
-      size: body.size.trim(),
+      product: items.map((item: {name:string;color:string;size:string;quantity:number}) => `${item.name} · ${item.color} · ${item.size} · الكمية: ${item.quantity}`).join("\\n").slice(0, 1000),
+      color: items.length === 1 ? items[0].color : "متعدد",
+      size: items.length === 1 ? items[0].size : "متعدد",
+      user_id: userId,
+      items,
       notes: [`حالة الطلب: تم استلام طلبك`, `طريقة الدفع: ${paymentMethod}`, `الإجمالي: ${totalAmount} ج.م`, governorate ? `المحافظة: ${governorate}` : "", city ? `المدينة: ${city}` : "", senderNumber ? `رقم التحويل منه: ${senderNumber}` : "", proofImageUrl ? `صورة التحويل: ${proofImageUrl}` : "", customerNotes].filter(Boolean).join("\n").slice(0, 4000),
     };
     const response = await fetch(`${supabaseUrl}/rest/v1/orders`, {
