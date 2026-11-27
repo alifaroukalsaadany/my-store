@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (typeof body.orderId !== "string" || typeof body.phone !== "string" || !body.orderId.trim() || !body.phone.trim()) {
       return NextResponse.json({ error: "اكتب رقم الطلب ورقم الموبايل." }, { status: 400 });
     }
-    const response = await fetch(`${supabaseUrl}/rest/v1/orders?order_id=eq.${encodeURIComponent(body.orderId.trim())}&select=order_id,customer_name,phone,product,created_at,notes&limit=1`, {
+    const response = await fetch(`${supabaseUrl}/rest/v1/orders?order_id=eq.${encodeURIComponent(body.orderId.trim())}&select=order_id,customer_name,phone,product,items,created_at,notes&limit=1`, {
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: "no-store"
     });
     if (!response.ok) return NextResponse.json({ error: "تعذر البحث عن الطلب حاليًا." }, { status: 502 });
@@ -23,6 +23,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "رقم الطلب أو رقم الموبايل غير صحيح." }, { status: 404 });
     }
     const status = String(row.notes || "").match(/^حالة الطلب: ([^\n]+)/m)?.[1] || "تم استلام طلبك";
-    return NextResponse.json({ order: { id: row.order_id, name: row.customer_name, product: row.product, createdAt: row.created_at, status } }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ order: { id: row.order_id, name: row.customer_name, product: row.product, items: row.items || [], createdAt: row.created_at, status } }, { headers: { "Cache-Control": "no-store" } });
   } catch { return NextResponse.json({ error: "حدث خطأ، حاول مرة أخرى." }, { status: 400 }); }
 }
