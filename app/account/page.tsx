@@ -15,6 +15,8 @@ export default function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [orders, setOrders] = useState<Array<{id:string;createdAt:string;product:string;items:Array<{name:string;color:string;size:string;quantity:number;price:number}>;status:string}>>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -22,6 +24,18 @@ export default function AccountPage() {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession));
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
+
+  useEffect(() => {
+    if (!session?.access_token) { setOrders([]); return; }
+    let active = true;
+    setOrdersLoading(true);
+    fetch("/api/orders/mine", { headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store" })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error("تعذر تحميل الطلبات")))
+      .then(data => { if (active) setOrders(Array.isArray(data.orders) ? data.orders : []); })
+      .catch(() => { if (active) setOrders([]); })
+      .finally(() => { if (active) setOrdersLoading(false); });
+    return () => { active = false; };
+  }, [session?.access_token]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,6 +100,18 @@ export default function AccountPage() {
                 <p className="text-xs text-[#82776b]">البريد الإلكتروني</p>
                 <p className="mt-1 break-all font-semibold" dir="ltr">{session.user.email}</p>
               </div>
+              <section className="text-right">
+                <h2 className="mb-3 text-lg font-bold">طلباتي السابقة</h2>
+                {ordersLoading ? <p className="text-sm text-[#82776b]">جارٍ تحميل الطلبات…</p> : orders.length === 0 ? <p className="rounded-xl bg-[#F2ECE4] p-4 text-sm text-[#82776b]">لا توجد طلبات مرتبطة بحسابك حتى الآن.</p> : <div className="space-y-3">
+                  {orders.map(order => <article key={order.id} className="rounded-2xl border border-[#e8dfd2] p-4">
+                    <div className="flex items-center justify-between gap-2"><strong>طلب رقم {order.id}</strong><span className="text-xs text-[#8b681d]">{order.status}</span></div>
+                    <p className="mt-1 text-xs text-[#82776b]">{new Date(order.createdAt).toLocaleString("ar-EG")}</p>
+                    <div className="mt-3 space-y-2 text-sm">
+                      {(order.items?.length ? order.items : [{name:order.product,color:"",size:"",quantity:1,price:0}]).map((item,index) => <p key={index}>{item.name} · اللون: {item.color || "—"} · المقاس: {item.size || "—"} · الكمية: {item.quantity}</p>)}
+                    </div>
+                  </article>)}
+                </div>}
+              </section>
               <button onClick={logout} disabled={busy} className="w-full rounded-full bg-[#1E1E1E] px-5 py-3 font-semibold text-white disabled:opacity-50">{busy ? "..." : "تسجيل الخروج"}</button>
             </div>
           ) : (
